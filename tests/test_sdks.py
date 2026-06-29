@@ -63,6 +63,17 @@ class SdkTests(unittest.TestCase):
         self.assertTrue(validate_object(goal))
         self.assertEqual(demand["spec"]["permissions"]["docs_write"], False)
 
+    def test_requester_promotes_complete_english_loop_intake_to_demand(self):
+        assessment = classify_intake(
+            "Inspect Mind Palace wiki, produce a fix plan, do not write back, finish today.",
+            requester={"kind": "profile", "id": "default"},
+            preferred_expert="mind-palace",
+        )
+        self.assertEqual(assessment["spec"]["classification"], "loop_candidate")
+        demand = promote_intake_to_demand(assessment)
+        self.assertTrue(validate_object(demand))
+        self.assertEqual(demand["spec"]["permissions"]["docs_write"], False)
+
     def test_expert_creates_valid_attempt(self):
         task = {
             "apiVersion": "agent.delivery.loop/v0",

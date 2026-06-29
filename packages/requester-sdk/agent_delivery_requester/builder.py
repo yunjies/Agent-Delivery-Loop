@@ -7,17 +7,17 @@ from hashlib import sha1
 MINIMUM_FIELDS = ["objective", "scope", "success_criteria", "constraints", "budget_or_deadline"]
 
 LIFT_KEYWORDS = {
-    "long_running": ["持续", "长期", "每天", "每周", "定期", "跟踪", "后续", "循环", "cron", "loop", "多轮"],
-    "interdependent": ["专家", "profile", "workflow", "codex", "飞书", "wiki", "审批", "通知", "分发", "路由"],
-    "feedback_driven": ["验收", "确认", "审批", "返工", "先", "再", "计划", "不要直接", "汇报"],
-    "traceable": ["证据", "报告", "记录", "状态", "进度", "清单", "归档", "可追踪", "audit"],
+    "long_running": ["持续", "长期", "每天", "每周", "定期", "跟踪", "后续", "循环", "cron", "loop", "多轮", "track", "recurring", "ongoing", "follow up"],
+    "interdependent": ["专家", "profile", "workflow", "codex", "飞书", "wiki", "审批", "通知", "分发", "路由", "expert", "route", "delegate", "handoff"],
+    "feedback_driven": ["验收", "确认", "审批", "返工", "先", "再", "计划", "不要直接", "汇报", "review", "confirm", "approval", "rework", "plan", "do not", "don't", "fix plan"],
+    "traceable": ["证据", "报告", "记录", "状态", "进度", "清单", "归档", "可追踪", "audit", "evidence", "report", "status", "progress", "checklist"],
 }
 
 FIELD_KEYWORDS = {
     "scope": ["wiki", "mind palace", "mind-palace", "飞书", "模型", "workflow", "cron", "目录", "项目", "repo"],
-    "success_criteria": ["完成", "输出", "报告", "清单", "计划", "验收", "修复", "通过"],
-    "constraints": ["不要", "不能", "只", "先", "禁止", "不允许", "read-only", "只读", "默认"],
-    "budget_or_deadline": ["今天", "明天", "本周", "小时", "分钟", "预算", "优先级", "尽快", "deadline"],
+    "success_criteria": ["完成", "输出", "报告", "清单", "计划", "验收", "修复", "通过", "produce", "finish", "fix", "plan", "report", "complete"],
+    "constraints": ["不要", "不能", "只", "先", "禁止", "不允许", "read-only", "只读", "默认", "do not", "don't", "without", "no "],
+    "budget_or_deadline": ["今天", "明天", "本周", "小时", "分钟", "预算", "优先级", "尽快", "deadline", "today", "tomorrow", "this week", "priority", "budget"],
 }
 
 
@@ -198,7 +198,7 @@ def _permissions_from_intake(assessment):
     extracted = assessment["spec"].get("extracted") or {}
     permissions = _permissions_from_extracted(extracted)
     raw_request = assessment["spec"].get("raw_request", "").lower()
-    if any(marker in raw_request for marker in ["不要直接写回", "不写回", "只读", "read-only"]):
+    if any(marker in raw_request for marker in ["不要直接写回", "不写回", "只读", "read-only", "do not write back", "don't write back"]):
         permissions["docs_write"] = False
     return permissions
 
