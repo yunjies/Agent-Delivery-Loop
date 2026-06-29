@@ -15,6 +15,13 @@ Hermes acts as one runtime that can host:
 
 The Delivery Supervisor remains supervisory. It does not implement business work directly.
 
+Model policy:
+- default to deterministic script execution for state transitions, registry validation, status queries, and runner ticks;
+- use GPT-class reasoning only for clarification, task decomposition, expert-routing conflicts, semantic evidence review, rework prompts, and supervision reports;
+- keep privileged state changes under deterministic permission and approval gates.
+
+See [delivery-supervisor-model-policy.md](delivery-supervisor-model-policy.md).
+
 ## Required Hermes Profiles
 
 ### delivery-supervisor

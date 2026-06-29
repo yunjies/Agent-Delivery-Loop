@@ -108,6 +108,8 @@ See [docs/v0-readiness.md](docs/v0-readiness.md) for the current local framework
 
 See [docs/intake-and-delegation.md](docs/intake-and-delegation.md) for the requester-side intake gate and LIFT rule.
 
+See [docs/delivery-supervisor-model-policy.md](docs/delivery-supervisor-model-policy.md) for the Hermes delivery-supervisor deterministic-vs-GPT action policy.
+
 See [docs/v0-completion-audit-2026-06-29.md](docs/v0-completion-audit-2026-06-29.md) for the requirement-by-requirement completion audit.
 
 See [docs/hermes-runtime-pilot-2026-06-29.md](docs/hermes-runtime-pilot-2026-06-29.md) for the first Hermes-side Delivery Supervisor skeleton rollout evidence.

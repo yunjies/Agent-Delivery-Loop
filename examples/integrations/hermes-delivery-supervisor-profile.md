@@ -80,8 +80,24 @@ Denied by default:
 - profile mutation;
 - skill mutation;
 - delete, move, archive;
-- unrestricted shell execution;
-- Feishu business data mutation.
+- unrestricted shell execution.
+
+Feishu business operations are allowed when they are explicitly delegated to a Feishu-capable Expert. They do not need a separate approval unless the Task also requests a high-risk system permission.
+
+## Model Policy
+
+The profile defaults to deterministic script execution for state transitions, registry validation, status queries, and supervisor ticks.
+
+Use GPT-class reasoning only for:
+
+- intake clarification questions;
+- task decomposition;
+- expert-routing conflicts;
+- semantic evidence review;
+- rework prompt generation;
+- supervision reports.
+
+See `docs/delivery-supervisor-model-policy.md`.
 
 ## Feishu Bot
 
