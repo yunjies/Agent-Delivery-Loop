@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
 from agent_delivery_expert import create_attempt
 from agent_delivery_loop import FilesystemStore, rank_experts, transition_task
 from agent_delivery_requester import create_demand, create_goal_from_demand
-from agent_delivery_supervisor import create_loop_decision, create_task
+from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task
 
 
 class FilesystemWorkspace:
@@ -42,40 +42,20 @@ class FilesystemWorkspace:
         return demand, goal
 
     def propose_task(self, goal, task_type, objective, experts, permissions, acceptance, required_capabilities=None, budget=None):
-        ranked = rank_experts(
-            {"spec": {"objective": objective, "required_capabilities": list(required_capabilities or [])}},
+        task, decision, ranked = propose_next_task(
+            goal,
             experts,
+            {
+                "task_type": task_type,
+                "objective": objective,
+                "permissions": permissions,
+                "acceptance": acceptance,
+                "required_capabilities": list(required_capabilities or []),
+                "budget": budget or {},
+            },
         )
-        if not ranked or ranked[0]["score"] <= 0:
-            decision = create_loop_decision(
-                goal,
-                action="mark_blocked",
-                reason="No matching expert found for task proposal.",
-                risk_assessment={"high_risk": False, "gate_required": False},
-            )
-            self.store.save(decision)
-            return None, decision, ranked
-
-        selected = ranked[0]["expert_id"]
-        task = create_task(
-            goal,
-            task_type=task_type,
-            objective=objective,
-            assignee={"kind": "expert", "id": selected},
-            permissions=permissions,
-            acceptance=acceptance,
-            budget=budget,
-            required_capabilities=required_capabilities,
-        )
-        decision = create_loop_decision(
-            goal,
-            action="create_task",
-            reason=f"Selected expert {selected} for {task_type}.",
-            next_task={"ref": task["metadata"]["id"]},
-            budget_assessment={"within_budget": True},
-            risk_assessment={"high_risk": False, "gate_required": False},
-        )
-        self.store.save(task)
+        if task is not None:
+            self.store.save(task)
         self.store.save(decision)
         return task, decision, ranked
 

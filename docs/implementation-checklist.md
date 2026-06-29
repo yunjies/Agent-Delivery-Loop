@@ -28,8 +28,8 @@
 - [x] Human approval adapter.
 - [x] Hermes profile adapter.
 - [x] Hermes workflow adapter.
-- [ ] Codex thread adapter.
-- [ ] Claude Code adapter.
+- [x] Codex thread adapter.
+- [x] Claude Code adapter.
 
 ## P4 Pilot
 

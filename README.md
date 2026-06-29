@@ -71,6 +71,14 @@ Run the minimal filesystem loop demo:
 python examples/minimal/run_minimal_loop.py --reset
 ```
 
+Or use the local CLI:
+
+```bash
+python scripts/adl.py validate
+python scripts/adl.py demo --reset
+python scripts/adl.py init-workspace /tmp/adl-workspace
+```
+
 ## Design Rules
 
 - Execution and supervision are separate.

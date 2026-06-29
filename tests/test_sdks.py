@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
 from agent_delivery_expert import create_attempt
 from agent_delivery_loop import validate_object
 from agent_delivery_requester import create_demand, create_goal_from_demand
-from agent_delivery_supervisor import create_loop_decision, create_task
+from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task
 
 
 class SdkTests(unittest.TestCase):
@@ -83,6 +83,38 @@ class SdkTests(unittest.TestCase):
         self.assertTrue(validate_object(decision))
         self.assertEqual(task["metadata"]["goal_id"], goal["metadata"]["id"])
         self.assertEqual(decision["spec"]["next_task"]["ref"], task["metadata"]["id"])
+
+    def test_delivery_supervisor_requests_approval_for_high_risk_task(self):
+        demand = create_demand(
+            title="Archive docs",
+            request="Archive stale docs",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        expert = {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
+            "metadata": {"id": "archiver", "title": "Archiver"},
+            "spec": {
+                "expert_kind": "script",
+                "capabilities": [{"id": "archive", "description": "Archive files", "priority": 100, "default_owner": True}],
+                "invocation": {"adapter": "script"},
+            },
+        }
+        task, decision, ranked = propose_next_task(
+            goal,
+            [expert],
+            {
+                "task_type": "archive",
+                "objective": "Archive stale docs",
+                "required_capabilities": ["archive"],
+                "permissions": {"delete_move_archive": True},
+                "acceptance": {"evidence_required": True},
+            },
+        )
+        self.assertIsNone(task)
+        self.assertEqual(decision["spec"]["action"], "request_approval")
+        self.assertEqual(ranked[0]["expert_id"], "archiver")
 
 
 if __name__ == "__main__":
