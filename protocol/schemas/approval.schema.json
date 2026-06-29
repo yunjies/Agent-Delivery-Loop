@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/approval.schema.json",
+  "title": "Approval",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "Approval" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "goal_id", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "goal_id": { "type": "string" },
+        "task_id": { "type": ["string", "null"] },
+        "created_at": { "type": "string" },
+        "resolved_at": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["requester", "approval_type", "question", "state"],
+      "properties": {
+        "requester": { "$ref": "common.schema.json#/definitions/actorRef" },
+        "approval_type": { "type": "string" },
+        "question": { "type": "string" },
+        "context": { "type": "object" },
+        "state": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["pending", "approved", "rejected", "cancelled"] },
+            "decision_by": { "type": ["object", "null"] },
+            "reason": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

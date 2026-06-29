@@ -25,6 +25,7 @@ The Delivery Supervisor does not implement business work. It supervises delivery
 - `Evidence`: artifacts used for acceptance.
 - `Budget`: token, time, attempt, and iteration limits.
 - `Gate`: permission and approval boundary.
+- `Approval`: a human or authorized actor decision for gated work.
 - `Expert`: registered capability provider.
 - `LoopDecision`: the Delivery Supervisor's next-step decision.
 

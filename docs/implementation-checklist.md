@@ -25,9 +25,9 @@
 ## P3 Adapters
 
 - [x] Filesystem adapter.
-- [ ] Human approval adapter.
-- [ ] Hermes profile adapter.
-- [ ] Hermes workflow adapter.
+- [x] Human approval adapter.
+- [x] Hermes profile adapter.
+- [x] Hermes workflow adapter.
 - [ ] Codex thread adapter.
 - [ ] Claude Code adapter.
 

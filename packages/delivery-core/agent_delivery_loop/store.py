@@ -14,6 +14,7 @@ KIND_DIRS = {
     "Attempt": "attempts",
     "Expert": "experts",
     "LoopDecision": "decisions",
+    "Approval": "approvals",
 }
 
 

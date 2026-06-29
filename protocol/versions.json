@@ -4,7 +4,7 @@
     {
       "version": "0.1.0",
       "status": "draft",
-      "description": "Initial Agent Delivery Loop protocol draft"
+      "description": "Initial Agent Delivery Loop protocol draft with supervision, expert routing, attempts, evidence, budget, and approval records"
     }
   ]
 }

@@ -1,5 +1,5 @@
 # Hermes Workflow Adapter
 
-The Hermes workflow adapter will run approved Hermes workflow specs as Expert Tasks.
+The Hermes workflow adapter creates serializable invocation payloads for approved Hermes workflow specs.
 
-Workflow mutation is not part of this adapter by default.
+It does not execute Hermes directly and does not mutate workflow specs. A controlled runner must apply policy before execution.

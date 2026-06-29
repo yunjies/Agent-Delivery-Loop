@@ -70,6 +70,17 @@ REQUIRED = {
         ("spec", "action"),
         ("spec", "reason"),
     ],
+    "Approval": [
+        ("apiVersion",),
+        ("kind",),
+        ("metadata", "id"),
+        ("metadata", "goal_id"),
+        ("metadata", "created_at"),
+        ("spec", "requester"),
+        ("spec", "approval_type"),
+        ("spec", "question"),
+        ("spec", "state", "status"),
+    ],
 }
 
 
