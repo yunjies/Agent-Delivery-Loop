@@ -63,7 +63,8 @@ def main(argv=None) -> int:
     enqueue.add_argument("--goal-id", required=True)
     enqueue.add_argument("--message-type", required=True)
     enqueue.add_argument("--content", required=True)
-    target = enqueue.add_mutually_exclusive_group(required=True)
+    enqueue.add_argument("--target-name", default="default")
+    target = enqueue.add_mutually_exclusive_group()
     target.add_argument("--chat-id")
     target.add_argument("--user-id")
     enqueue.add_argument("--task-id")
@@ -152,11 +153,7 @@ def _cmd_notify_enqueue(args, state_root: Path) -> int:
     store = FilesystemStore(state_root).init()
     goal = store.load("Goal", args.goal_id)
     task = store.load("Task", args.task_id) if args.task_id else None
-    target = {"type": "feishu"}
-    if args.chat_id:
-        target["chat_id"] = args.chat_id
-    if args.user_id:
-        target["user_id"] = args.user_id
+    target = _resolve_notification_target(state_root, args)
     payload = create_notification_payload(goal, args.message_type, args.content, target, task=task)
     outbox = state_root / "outbox"
     outbox.mkdir(parents=True, exist_ok=True)
@@ -165,6 +162,30 @@ def _cmd_notify_enqueue(args, state_root: Path) -> int:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"ok": True, "outbox_id": out_id, "path": str(path)}, ensure_ascii=False, indent=2))
     return 0
+
+
+def _resolve_notification_target(state_root: Path, args) -> dict:
+    target = {"type": "feishu"}
+    if args.chat_id:
+        target["chat_id"] = args.chat_id
+        return target
+    if args.user_id:
+        target["user_id"] = args.user_id
+        return target
+    config_path = state_root / "config" / "notification-targets.json"
+    if not config_path.exists():
+        raise ValueError("missing notification target: pass --chat-id/--user-id or create config/notification-targets.json")
+    data = json.loads(config_path.read_text(encoding="utf-8"))
+    configured = data.get(args.target_name)
+    if not configured:
+        raise ValueError(f"notification target not found: {args.target_name}")
+    if configured.get("chat_id"):
+        target["chat_id"] = configured["chat_id"]
+    elif configured.get("user_id"):
+        target["user_id"] = configured["user_id"]
+    else:
+        raise ValueError(f"notification target {args.target_name} has no chat_id or user_id")
+    return target
 
 
 def _cmd_notify_send_outbox(args, state_root: Path) -> int:

@@ -79,6 +79,35 @@ class HermesRuntimeTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertTrue(Path(payload["path"]).exists())
 
+    def test_notify_enqueue_uses_configured_default_target(self):
+        config_dir = Path(self.tempdir) / "config"
+        config_dir.mkdir(parents=True)
+        (config_dir / "notification-targets.json").write_text(
+            json.dumps({"default": {"chat_id": "oc_configured"}}),
+            encoding="utf-8",
+        )
+        ingest = json.loads(
+            self.run_runtime(
+                "feishu-ingest",
+                "#wiki Inspect Mind Palace wiki, produce a fix plan, do not write back, finish today.",
+                "--requester-id",
+                "ou_test",
+                "--promote",
+            ).stdout
+        )
+        result = self.run_runtime(
+            "notify-enqueue",
+            "--goal-id",
+            ingest["promoted"]["goal_id"],
+            "--message-type",
+            "status_report",
+            "--content",
+            "ADL smoke",
+        )
+        payload = json.loads(result.stdout)
+        outbox = json.loads(Path(payload["path"]).read_text(encoding="utf-8"))
+        self.assertEqual(outbox["target"]["chat_id"], "oc_configured")
+
     def test_feishu_listener_builds_intake_command_for_keyword_message(self):
         command = build_intake_command(
             {
