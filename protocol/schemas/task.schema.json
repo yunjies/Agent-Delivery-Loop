@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/task.schema.json",
+  "title": "Task",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "Task" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "goal_id", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "goal_id": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["task_type", "objective", "assignee", "permissions", "acceptance", "state"],
+      "properties": {
+        "task_type": { "type": "string" },
+        "objective": { "type": "string" },
+        "assignee": { "$ref": "common.schema.json#/definitions/actorRef" },
+        "permissions": { "$ref": "common.schema.json#/definitions/permissionSet" },
+        "budget": { "$ref": "budget.schema.json" },
+        "acceptance": {
+          "type": "object",
+          "required": ["evidence_required"],
+          "properties": {
+            "evidence_required": { "type": "boolean" },
+            "expected_evidence": { "type": "array", "items": { "type": "string" } },
+            "human_approval_required": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "state": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["pending", "running", "submitted", "accepted", "rejected", "blocked", "cancelled"] },
+            "latest_attempt_id": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,47 @@
+{
+  "apiVersion": "agent.delivery.loop/v0",
+  "kind": "Task",
+  "metadata": {
+    "id": "task-mind-palace-lint-20260630",
+    "goal_id": "goal-mind-palace-health-20260629",
+    "created_at": "2026-06-29T00:00:00+08:00"
+  },
+  "spec": {
+    "task_type": "workflow_run",
+    "objective": "Run the Mind Palace lint workflow and produce a report.",
+    "assignee": {
+      "kind": "hermes_workflow",
+      "id": "mind-palace-lint"
+    },
+    "permissions": {
+      "docs_write": false,
+      "delete_move_archive": false,
+      "cron_mutation": false,
+      "workflow_mutation": false,
+      "profile_mutation": false,
+      "external_send": true,
+      "code_write": false,
+      "shell_exec": false
+    },
+    "budget": {
+      "token_limit": 12000,
+      "token_used_estimate": 0,
+      "max_attempts": 1,
+      "time_limit_seconds": 900,
+      "escalation": "ask_requester"
+    },
+    "acceptance": {
+      "evidence_required": true,
+      "expected_evidence": [
+        "workflow_run_id",
+        "workflow_status",
+        "delivery_status"
+      ],
+      "human_approval_required": false
+    },
+    "state": {
+      "status": "pending",
+      "latest_attempt_id": null
+    }
+  }
+}

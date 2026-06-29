@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/expert.schema.json",
+  "title": "Expert",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "Expert" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["expert_kind", "capabilities", "invocation"],
+      "properties": {
+        "expert_kind": { "type": "string" },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "description"],
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "priority": { "type": "integer" },
+              "cost_class": { "type": "string" },
+              "reliability": { "type": "string" },
+              "default_owner": { "type": "boolean" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "invocation": {
+          "type": "object",
+          "required": ["adapter"],
+          "properties": {
+            "adapter": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

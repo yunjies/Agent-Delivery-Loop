@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/evidence.schema.json",
+  "title": "Evidence",
+  "type": "object",
+  "required": ["kind", "path"],
+  "properties": {
+    "kind": { "type": "string" },
+    "path": { "type": "string" },
+    "mutable": { "type": "boolean", "default": false },
+    "summary": { "type": "string" }
+  },
+  "additionalProperties": true
+}

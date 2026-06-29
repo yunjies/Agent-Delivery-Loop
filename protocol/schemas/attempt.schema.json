@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/attempt.schema.json",
+  "title": "Attempt",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "Attempt" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "task_id", "goal_id", "started_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "goal_id": { "type": "string" },
+        "started_at": { "type": "string" },
+        "finished_at": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["executor", "result"],
+      "properties": {
+        "executor": { "$ref": "common.schema.json#/definitions/actorRef" },
+        "result": {
+          "type": "object",
+          "required": ["status", "summary", "evidence", "budget_used"],
+          "properties": {
+            "status": { "enum": ["succeeded", "failed", "blocked", "cancelled"] },
+            "summary": { "type": "string" },
+            "evidence": { "type": "array", "items": { "$ref": "evidence.schema.json" } },
+            "budget_used": { "$ref": "budget.schema.json" },
+            "error": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,38 @@
+{
+  "apiVersion": "agent.delivery.loop/v0",
+  "kind": "Expert",
+  "metadata": {
+    "id": "mind-palace",
+    "title": "Mind Palace"
+  },
+  "spec": {
+    "expert_kind": "hermes_profile",
+    "capabilities": [
+      {
+        "id": "wiki_survey",
+        "description": "Survey Mind Palace wiki state",
+        "priority": 90,
+        "cost_class": "low",
+        "reliability": "high",
+        "default_owner": true
+      },
+      {
+        "id": "wiki_lint",
+        "description": "Run Obsidian-compatible wiki lint and report warnings",
+        "priority": 95,
+        "cost_class": "low",
+        "reliability": "high",
+        "default_owner": true
+      }
+    ],
+    "invocation": {
+      "adapter": "hermes_workflow",
+      "profile": "mind-palace",
+      "workflows": [
+        "mind-palace-survey-smoke",
+        "mind-palace-lint",
+        "mind-palace-index-plan"
+      ]
+    }
+  }
+}

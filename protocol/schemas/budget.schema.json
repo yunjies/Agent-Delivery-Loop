@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/budget.schema.json",
+  "title": "Budget",
+  "type": "object",
+  "properties": {
+    "token_limit": { "type": "integer", "minimum": 0 },
+    "token_used_estimate": { "type": "integer", "minimum": 0 },
+    "max_iterations": { "type": "integer", "minimum": 0 },
+    "max_tasks": { "type": "integer", "minimum": 0 },
+    "max_attempts": { "type": "integer", "minimum": 0 },
+    "max_llm_nodes_per_iteration": { "type": "integer", "minimum": 0 },
+    "stop_when_remaining_below": { "type": "integer", "minimum": 0 },
+    "time_limit_seconds": { "type": ["integer", "null"], "minimum": 0 },
+    "escalation": { "type": "string" }
+  },
+  "additionalProperties": false
+}

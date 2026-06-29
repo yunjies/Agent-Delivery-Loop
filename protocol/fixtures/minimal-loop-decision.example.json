@@ -1,0 +1,25 @@
+{
+  "apiVersion": "agent.delivery.loop/v0",
+  "kind": "LoopDecision",
+  "metadata": {
+    "id": "decision-mind-palace-health-001",
+    "goal_id": "goal-mind-palace-health-20260629",
+    "created_at": "2026-06-29T00:00:00+08:00"
+  },
+  "spec": {
+    "action": "create_task",
+    "reason": "Lint report is the next low-risk evidence collection step.",
+    "next_task": {
+      "ref": "task-mind-palace-lint-20260630"
+    },
+    "required_approval": null,
+    "budget_assessment": {
+      "remaining_token_estimate": 120000,
+      "within_budget": true
+    },
+    "risk_assessment": {
+      "high_risk": false,
+      "gate_required": false
+    }
+  }
+}

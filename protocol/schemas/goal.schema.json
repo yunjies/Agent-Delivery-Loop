@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/goal.schema.json",
+  "title": "Goal",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "Goal" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "title", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "created_at": { "type": "string" },
+        "demand_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["requester", "objective", "success_criteria", "state"],
+      "properties": {
+        "requester": { "$ref": "common.schema.json#/definitions/actorRef" },
+        "objective": { "type": "string", "minLength": 1 },
+        "success_criteria": { "type": "array", "items": { "type": "string" } },
+        "risk_boundary": { "$ref": "common.schema.json#/definitions/permissionSet" },
+        "budget": { "$ref": "budget.schema.json" },
+        "state": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "enum": ["draft", "active", "waiting_approval", "complete", "blocked", "aborted", "budget_stopped"]
+            },
+            "current_task_ids": { "type": "array", "items": { "type": "string" } },
+            "completed_task_ids": { "type": "array", "items": { "type": "string" } },
+            "blocked_reason": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

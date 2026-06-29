@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/loop-decision.schema.json",
+  "title": "LoopDecision",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "LoopDecision" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "goal_id", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "goal_id": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["action", "reason"],
+      "properties": {
+        "action": {
+          "enum": ["create_task", "request_approval", "mark_complete", "mark_blocked", "mark_aborted", "stop_budget"]
+        },
+        "reason": { "type": "string" },
+        "next_task": { "type": ["object", "null"] },
+        "required_approval": { "type": ["object", "null"] },
+        "budget_assessment": { "type": "object" },
+        "risk_assessment": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

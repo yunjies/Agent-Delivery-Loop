@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/common.schema.json",
+  "title": "Common",
+  "definitions": {
+    "actorRef": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "type": "string" },
+        "id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "permissionSet": {
+      "type": "object",
+      "properties": {
+        "docs_write": { "type": "boolean" },
+        "delete_move_archive": { "type": "boolean" },
+        "cron_mutation": { "type": "boolean" },
+        "workflow_mutation": { "type": "boolean" },
+        "profile_mutation": { "type": "boolean" },
+        "external_send": { "type": "boolean" },
+        "code_write": { "type": "boolean" },
+        "shell_exec": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
