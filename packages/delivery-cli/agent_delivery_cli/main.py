@@ -22,6 +22,7 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("validate", help="Validate protocol JSON and fixtures")
+    sub.add_parser("release-check", help="Run the v0 release verification checks")
 
     init_parser = sub.add_parser("init-workspace", help="Initialize a filesystem workspace")
     init_parser.add_argument("path")
@@ -55,6 +56,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.command == "validate":
         runpy.run_path(str(ROOT / "scripts" / "validate-protocol.py"), run_name="__main__")
+        return 0
+    if args.command == "release-check":
+        runpy.run_path(str(ROOT / "scripts" / "release-check.py"), run_name="__main__")
         return 0
     if args.command == "init-workspace":
         FilesystemStore(args.path).init()

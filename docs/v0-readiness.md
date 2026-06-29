@@ -28,6 +28,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - Feishu notification payload.
 - CLI:
   - `validate`;
+  - `release-check`;
   - `demo`;
   - `init-workspace`;
   - `status`;
@@ -56,6 +57,7 @@ Run:
 
 ```bash
 python scripts/adl.py validate
+python scripts/adl.py release-check
 python -m unittest discover -s tests -v
 python scripts/adl.py demo --reset
 ```
@@ -63,6 +65,7 @@ python scripts/adl.py demo --reset
 Expected:
 
 - protocol validation succeeds;
+- release check returns `ok: true`;
 - all tests pass;
 - demo returns `ok: true`;
 - demo creates a workspace with Goal, Task, Attempt, LoopDecision, Expert, and event records;

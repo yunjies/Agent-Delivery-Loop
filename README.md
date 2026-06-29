@@ -34,8 +34,8 @@ The Delivery Supervisor does not implement business work. It supervises delivery
 ```text
 docs/                 Concept and user-facing guides
 protocol/             Versioned schemas and fixtures
-packages/             Core libraries and SDK placeholders
-adapters/             Runtime adapter placeholders
+packages/             Core libraries, SDK helpers, and CLI
+adapters/             Filesystem and runtime payload adapters
 examples/             Minimal and integration examples
 tests/                Protocol and compatibility tests
 ```
@@ -79,6 +79,7 @@ Or use the local CLI:
 
 ```bash
 python scripts/adl.py validate
+python scripts/adl.py release-check
 python scripts/adl.py demo --reset
 python scripts/adl.py init-workspace /tmp/adl-workspace
 python scripts/adl.py status /tmp/adl-workspace
@@ -102,5 +103,7 @@ python scripts/adl.py supervisor-tick /tmp/adl-workspace
 ## Readiness
 
 See [docs/v0-readiness.md](docs/v0-readiness.md) for the current local framework readiness boundary and verification commands.
+
+See [docs/v0-completion-audit-2026-06-29.md](docs/v0-completion-audit-2026-06-29.md) for the requirement-by-requirement completion audit.
 
 See [docs/hermes-runtime-pilot-2026-06-29.md](docs/hermes-runtime-pilot-2026-06-29.md) for the first Hermes-side Delivery Supervisor skeleton rollout evidence.

@@ -7,6 +7,7 @@ It uses only the Python standard library.
 Commands:
 
 - `validate`
+- `release-check`
 - `demo`
 - `init-workspace`
 - `status`

@@ -3,8 +3,8 @@
   "versions": [
     {
       "version": "0.1.0",
-      "status": "draft",
-      "description": "Initial Agent Delivery Loop protocol draft with supervision, expert routing, attempts, evidence, budget, and approval records"
+      "status": "ready",
+      "description": "Initial Agent Delivery Loop framework baseline with protocol schemas, SDK helpers, deterministic supervisor review, filesystem runner, adapters, CLI, tests, and Hermes skeleton pilot evidence"
     }
   ]
 }

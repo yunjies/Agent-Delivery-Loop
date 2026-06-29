@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -59,6 +60,14 @@ class CliTests(unittest.TestCase):
             self.assertEqual(tick_payload["reviewed"], [])
         finally:
             shutil.rmtree(tempdir)
+
+    def test_release_check(self):
+        if os.environ.get("ADL_SKIP_RELEASE_CHECK_TEST") == "1":
+            self.skipTest("release-check subprocess skips recursive release-check test")
+        result = self.run_cli("release-check")
+        payload = json.loads(result.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertEqual([check["name"] for check in payload["checks"]], ["protocol", "tests"])
 
 
 if __name__ == "__main__":
