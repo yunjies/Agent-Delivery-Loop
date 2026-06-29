@@ -33,7 +33,8 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - `status`;
   - `list`;
   - `show`;
-  - `review-attempt`.
+  - `review-attempt`;
+  - `supervisor-tick`.
 - Hermes skeleton pilot:
   - Delivery Supervisor profile created in Hermes runtime;
   - ADL runtime workspace created in Hermes runtime;
@@ -44,6 +45,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
 
 - No daemon.
 - No automatic queue consumer.
+- No long-running worker process.
 - No direct Codex, Claude Code, or Hermes execution.
 - No Feishu/Lark notification delivery.
 - No live cron or workflow mutation.
@@ -65,6 +67,7 @@ Expected:
 - demo returns `ok: true`;
 - demo creates a workspace with Goal, Task, Attempt, LoopDecision, Expert, and event records;
 - `review-attempt` can append a supervisor acceptance decision for the demo attempt.
+- `supervisor-tick` can scan submitted tasks and review unreviewed latest attempts.
 
 ## Framework Boundary
 
@@ -94,5 +97,5 @@ Hermes skeleton integration has started:
 Remaining runtime work:
 
 - bind and test an optional supervision Feishu bot;
-- add cron or queue-driven Delivery Supervisor loops;
+- bind `supervisor-tick` to cron or another queue driver;
 - add live execution adapters only behind explicit approval gates.

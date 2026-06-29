@@ -49,6 +49,7 @@ v0 defines a local supervised delivery-loop framework:
 - core lifecycle, permissions, budget, routing, and filesystem store helpers;
 - requester, supervisor, and expert SDK helpers;
 - deterministic supervisor attempt review that can accept, reject, block, stop for budget, request approval, or generate a rework prompt;
+- deterministic filesystem supervisor tick that scans submitted tasks and reviews unreviewed attempts;
 - local filesystem workspace and CLI;
 - payload adapters for Hermes, Codex, Claude Code, human approval, and Feishu notification payloads.
 
@@ -83,6 +84,7 @@ python scripts/adl.py init-workspace /tmp/adl-workspace
 python scripts/adl.py status /tmp/adl-workspace
 python scripts/adl.py list /tmp/adl-workspace Goal
 python scripts/adl.py review-attempt /tmp/adl-workspace <goal-id> <task-id> <attempt-id>
+python scripts/adl.py supervisor-tick /tmp/adl-workspace
 ```
 
 ## Design Rules

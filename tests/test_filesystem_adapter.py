@@ -57,6 +57,49 @@ class FilesystemAdapterTests(unittest.TestCase):
         finally:
             shutil.rmtree(tempdir)
 
+    def test_supervisor_tick_reviews_submitted_attempt_once(self):
+        tempdir = tempfile.mkdtemp()
+        try:
+            workspace = FilesystemWorkspace(tempdir)
+            expert = json.loads((ROOT / "protocol" / "fixtures" / "mind-palace-expert.example.json").read_text(encoding="utf-8"))
+            workspace.register_expert(expert)
+            _, goal = workspace.start_goal(
+                title="Maintain wiki health",
+                request="Keep the wiki healthy",
+                requester={"kind": "human", "id": "requester-example"},
+                success_criteria=["lint succeeds"],
+                budget={"token_limit": 1000, "token_used_estimate": 0},
+                permissions={"docs_write": False, "external_send": True},
+            )
+            task, _, _ = workspace.propose_task(
+                goal,
+                task_type="workflow_run",
+                objective="Run wiki_lint and report.",
+                experts=[expert],
+                permissions={"docs_write": False, "external_send": True},
+                acceptance={"evidence_required": True, "expected_evidence": ["report"]},
+                required_capabilities=["wiki_lint"],
+            )
+            attempt = workspace.submit_attempt(
+                task,
+                executor={"kind": "expert", "id": "mind-palace"},
+                status="succeeded",
+                summary="Done",
+                evidence=[{"kind": "report", "path": "/tmp/report.md"}],
+                budget_used={"token_used_estimate": 0},
+            )
+
+            first = workspace.supervisor_tick()
+            self.assertEqual(len(first["reviewed"]), 1)
+            self.assertEqual(first["reviewed"][0]["attempt_id"], attempt["metadata"]["id"])
+            self.assertEqual(first["reviewed"][0]["decision_action"], "mark_complete")
+
+            second = workspace.supervisor_tick()
+            self.assertEqual(second["reviewed"], [])
+            self.assertTrue(any(item.get("reason") == "status:accepted" for item in second["skipped"]))
+        finally:
+            shutil.rmtree(tempdir)
+
 
 if __name__ == "__main__":
     unittest.main()

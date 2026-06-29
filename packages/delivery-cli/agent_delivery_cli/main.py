@@ -10,9 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
 sys.path.insert(0, str(ROOT / "packages" / "delivery-supervisor-sdk"))
+sys.path.insert(0, str(ROOT / "adapters" / "filesystem"))
 
 from agent_delivery_loop import FilesystemStore, KIND_DIRS
 from agent_delivery_supervisor import review_attempt
+from agent_delivery_filesystem import FilesystemWorkspace
 
 
 def main(argv=None):
@@ -41,6 +43,10 @@ def main(argv=None):
     review_parser.add_argument("goal_id")
     review_parser.add_argument("task_id")
     review_parser.add_argument("attempt_id")
+
+    tick_parser = sub.add_parser("supervisor-tick", help="Review submitted tasks with unreviewed attempts")
+    tick_parser.add_argument("workspace")
+    tick_parser.add_argument("--max-reviews", type=int)
 
     demo_parser = sub.add_parser("demo", help="Run the minimal filesystem demo")
     demo_parser.add_argument("--reset", action="store_true")
@@ -88,6 +94,10 @@ def main(argv=None):
             "decision_action": decision["spec"]["action"],
             "next_prompt": decision["spec"].get("next_prompt"),
         }, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "supervisor-tick":
+        result = FilesystemWorkspace(args.workspace).supervisor_tick(max_reviews=args.max_reviews)
+        print(json.dumps({"ok": True, **result}, ensure_ascii=False, indent=2))
         return 0
     if args.command == "demo":
         demo_args = []

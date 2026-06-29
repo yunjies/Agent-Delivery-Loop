@@ -86,3 +86,43 @@ class FilesystemWorkspace:
         self.store.save(updated_task)
         self.store.save(decision)
         return updated_task, decision
+
+    def supervisor_tick(self, max_reviews=None):
+        """Review submitted tasks with unreviewed latest attempts."""
+
+        reviewed = []
+        skipped = []
+        decisions = self.store.list_objects("LoopDecision")
+        reviewed_attempt_ids = {
+            decision.get("spec", {}).get("review_feedback", {}).get("attempt_id")
+            for decision in decisions
+            if decision.get("spec", {}).get("review_feedback", {}).get("attempt_id")
+        }
+        for task in self.store.list_objects("Task"):
+            if max_reviews is not None and len(reviewed) >= max_reviews:
+                break
+            state = task.get("spec", {}).get("state", {})
+            if state.get("status") != "submitted":
+                skipped.append({"task_id": task["metadata"]["id"], "reason": f"status:{state.get('status')}"})
+                continue
+            attempt_id = state.get("latest_attempt_id")
+            if not attempt_id:
+                skipped.append({"task_id": task["metadata"]["id"], "reason": "missing_latest_attempt"})
+                continue
+            if attempt_id in reviewed_attempt_ids:
+                skipped.append({"task_id": task["metadata"]["id"], "attempt_id": attempt_id, "reason": "already_reviewed"})
+                continue
+            goal = self.store.load("Goal", task["metadata"]["goal_id"])
+            attempt = self.store.load("Attempt", attempt_id)
+            updated_task, decision = self.review_attempt(goal, task, attempt)
+            reviewed.append(
+                {
+                    "task_id": updated_task["metadata"]["id"],
+                    "attempt_id": attempt_id,
+                    "task_status": updated_task["spec"]["state"]["status"],
+                    "decision_id": decision["metadata"]["id"],
+                    "decision_action": decision["spec"]["action"],
+                }
+            )
+            reviewed_attempt_ids.add(attempt_id)
+        return {"reviewed": reviewed, "skipped": skipped}

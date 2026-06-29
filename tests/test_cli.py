@@ -52,6 +52,11 @@ class CliTests(unittest.TestCase):
             self.assertEqual(review_payload["decision_action"], "mark_complete")
             after = json.loads(self.run_cli("status", str(demo_workspace)).stdout)
             self.assertEqual(after["counts"]["LoopDecision"], before_decisions + 1)
+
+            tick = self.run_cli("supervisor-tick", str(demo_workspace))
+            tick_payload = json.loads(tick.stdout)
+            self.assertTrue(tick_payload["ok"])
+            self.assertEqual(tick_payload["reviewed"], [])
         finally:
             shutil.rmtree(tempdir)
 

@@ -13,3 +13,4 @@ Commands:
 - `list`
 - `show`
 - `review-attempt`
+- `supervisor-tick`

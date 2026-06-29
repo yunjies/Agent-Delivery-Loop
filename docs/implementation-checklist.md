@@ -45,6 +45,7 @@
 - [x] CLI summarizes workspace status.
 - [x] CLI lists workspace objects.
 - [x] CLI reviews attempts and writes supervisor decisions.
+- [x] CLI runs a deterministic supervisor tick over submitted attempts.
 - [x] v0 readiness document exists.
 
 ## P6 Supervisor Loop Usability
@@ -54,3 +55,11 @@
 - [x] Deterministic attempt review requests approval when human acceptance is required.
 - [x] Deterministic attempt review marks blocked attempts as blocked.
 - [x] Deterministic attempt review stops when budget thresholds are exhausted.
+
+## P7 Runtime Runner Readiness
+
+- [x] Filesystem workspace can scan submitted tasks.
+- [x] Filesystem workspace skips tasks without a submitted latest attempt.
+- [x] Filesystem workspace avoids reviewing the same latest attempt twice.
+- [x] CLI exposes the runner as `supervisor-tick`.
+- [x] Runner is deterministic and does not execute business work.
