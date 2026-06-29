@@ -6,6 +6,18 @@ class ValidationError(ValueError):
 
 
 REQUIRED = {
+    "IntakeAssessment": [
+        ("apiVersion",),
+        ("kind",),
+        ("metadata", "id"),
+        ("metadata", "created_at"),
+        ("spec", "requester"),
+        ("spec", "raw_request"),
+        ("spec", "classification"),
+        ("spec", "lift", "score"),
+        ("spec", "minimum_fields"),
+        ("spec", "recommended_path"),
+    ],
     "Demand": [
         ("apiVersion",),
         ("kind",),

@@ -9,6 +9,7 @@ v0 is complete as a framework baseline when it can:
 - define durable protocol objects for supervised delivery;
 - validate protocol objects and fixtures;
 - create Demand, Goal, Task, Attempt, Approval, Expert, Evidence, and LoopDecision records;
+- classify raw requester input before creating a loop;
 - select experts by capability;
 - enforce explicit permission and budget gates;
 - review expert attempts deterministically;
@@ -27,6 +28,8 @@ v0 is complete as a framework baseline when it can:
 | Fixtures validate | `protocol/fixtures/*.json`; `python scripts/adl.py validate` | Complete |
 | Core lifecycle, permission, budget, routing, and store helpers exist | `packages/delivery-core/agent_delivery_loop/` | Complete |
 | Requester SDK creates Demand and Goal | `packages/requester-sdk/`; `tests/test_sdks.py` | Complete |
+| Requester SDK classifies raw intake before loop creation | `classify_intake`; `test_requester_classifies_simple_prompt_outside_loop`; `test_requester_clarifies_loop_candidate_with_missing_fields` | Complete |
+| Requester SDK promotes loop candidates to Demand and Goal | `promote_intake_to_demand`; `test_requester_promotes_complete_loop_intake_to_demand` | Complete |
 | Supervisor SDK creates Task and LoopDecision | `packages/delivery-supervisor-sdk/`; `tests/test_sdks.py` | Complete |
 | Expert SDK creates Attempt records | `packages/expert-adapter-sdk/`; `tests/test_sdks.py` | Complete |
 | Human approval flow exists | `adapters/human-approval/`; `tests/test_human_approval_adapter.py` | Complete |
@@ -53,6 +56,7 @@ Run from the repository root:
 python scripts/adl.py validate
 python scripts/adl.py release-check
 python -m unittest discover -s tests -v
+python scripts/adl.py intake "整理 Mind Palace wiki，先巡检再输出修复计划，不要直接写回，今天完成。" --preferred-expert mind-palace
 python scripts/adl.py demo --reset
 ```
 

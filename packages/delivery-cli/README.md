@@ -8,6 +8,7 @@ Commands:
 
 - `validate`
 - `release-check`
+- `intake`
 - `demo`
 - `init-workspace`
 - `status`

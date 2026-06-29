@@ -23,6 +23,7 @@ class DeliveryCoreTests(unittest.TestCase):
             "minimal-task.example.json",
             "mind-palace-expert.example.json",
             "minimal-loop-decision.example.json",
+            "minimal-intake-assessment.example.json",
         ]:
             self.assertTrue(validate_object(self.load_fixture(name)))
 

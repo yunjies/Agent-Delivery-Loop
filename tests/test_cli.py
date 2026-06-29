@@ -69,6 +69,29 @@ class CliTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual([check["name"] for check in payload["checks"]], ["protocol", "tests"])
 
+    def test_intake_cli_can_save_and_promote_loop_candidate(self):
+        tempdir = tempfile.mkdtemp()
+        try:
+            result = self.run_cli(
+                "intake",
+                "整理 Mind Palace wiki，先巡检再输出修复计划，不要直接写回，今天完成。",
+                "--preferred-expert",
+                "mind-palace",
+                "--workspace",
+                tempdir,
+                "--promote",
+            )
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["assessment"]["spec"]["classification"], "loop_candidate")
+            self.assertIn("promoted", payload)
+
+            status = json.loads(self.run_cli("status", tempdir).stdout)
+            self.assertEqual(status["counts"]["IntakeAssessment"], 1)
+            self.assertEqual(status["counts"]["Demand"], 1)
+            self.assertEqual(status["counts"]["Goal"], 1)
+        finally:
+            shutil.rmtree(tempdir)
+
 
 if __name__ == "__main__":
     unittest.main()

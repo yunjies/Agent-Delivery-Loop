@@ -50,6 +50,7 @@ v0 defines a local supervised delivery-loop framework:
 - requester, supervisor, and expert SDK helpers;
 - deterministic supervisor attempt review that can accept, reject, block, stop for budget, request approval, or generate a rework prompt;
 - deterministic filesystem supervisor tick that scans submitted tasks and reviews unreviewed attempts;
+- pre-loop intake classification that decides whether a raw request should become a supervised loop;
 - local filesystem workspace and CLI;
 - payload adapters for Hermes, Codex, Claude Code, human approval, and Feishu notification payloads.
 
@@ -80,6 +81,7 @@ Or use the local CLI:
 ```bash
 python scripts/adl.py validate
 python scripts/adl.py release-check
+python scripts/adl.py intake "整理 Mind Palace wiki，先巡检再输出修复计划，不要直接写回，今天完成。" --preferred-expert mind-palace
 python scripts/adl.py demo --reset
 python scripts/adl.py init-workspace /tmp/adl-workspace
 python scripts/adl.py status /tmp/adl-workspace
@@ -103,6 +105,8 @@ python scripts/adl.py supervisor-tick /tmp/adl-workspace
 ## Readiness
 
 See [docs/v0-readiness.md](docs/v0-readiness.md) for the current local framework readiness boundary and verification commands.
+
+See [docs/intake-and-delegation.md](docs/intake-and-delegation.md) for the requester-side intake gate and LIFT rule.
 
 See [docs/v0-completion-audit-2026-06-29.md](docs/v0-completion-audit-2026-06-29.md) for the requirement-by-requirement completion audit.
 

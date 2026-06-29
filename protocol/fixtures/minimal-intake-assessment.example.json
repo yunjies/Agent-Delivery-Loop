@@ -1,0 +1,41 @@
+{
+  "apiVersion": "agent.delivery.loop/v0",
+  "kind": "IntakeAssessment",
+  "metadata": {
+    "id": "intake-example",
+    "title": "Maintain Mind Palace wiki",
+    "created_at": "2026-06-29T00:00:00+08:00"
+  },
+  "spec": {
+    "requester": { "kind": "human", "id": "requester-example" },
+    "raw_request": "整理 Mind Palace wiki，先巡检再给修复计划，不要直接写回，今天完成。",
+    "source": "example",
+    "classification": "loop_candidate",
+    "lift": {
+      "long_running": true,
+      "interdependent": true,
+      "feedback_driven": true,
+      "traceable": true,
+      "score": 4,
+      "reasons": ["multi-step", "expert-routing", "approval-aware", "evidence-needed"]
+    },
+    "minimum_fields": {
+      "objective": true,
+      "scope": true,
+      "success_criteria": true,
+      "constraints": true,
+      "budget_or_deadline": true
+    },
+    "missing_fields": [],
+    "clarifying_questions": [],
+    "recommended_path": "create_loop",
+    "preferred_expert": "mind-palace",
+    "extracted": {
+      "objective": "整理 Mind Palace wiki",
+      "scope": "Mind Palace wiki",
+      "success_criteria": ["巡检完成", "给出修复计划"],
+      "constraints": ["不要直接写回"],
+      "budget_or_deadline": "今天完成"
+    }
+  }
+}

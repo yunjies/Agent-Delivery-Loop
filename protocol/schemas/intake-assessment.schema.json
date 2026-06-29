@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-delivery-loop.dev/schemas/intake-assessment.schema.json",
+  "title": "IntakeAssessment",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "agent.delivery.loop/v0" },
+    "kind": { "const": "IntakeAssessment" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["requester", "raw_request", "classification", "lift", "minimum_fields", "recommended_path"],
+      "properties": {
+        "requester": { "$ref": "common.schema.json#/definitions/actorRef" },
+        "raw_request": { "type": "string", "minLength": 1 },
+        "source": { "type": "string" },
+        "classification": {
+          "enum": ["simple_prompt", "needs_clarification", "draft_delegation", "loop_candidate", "rejected_for_loop"]
+        },
+        "lift": {
+          "type": "object",
+          "required": ["long_running", "interdependent", "feedback_driven", "traceable", "score"],
+          "properties": {
+            "long_running": { "type": "boolean" },
+            "interdependent": { "type": "boolean" },
+            "feedback_driven": { "type": "boolean" },
+            "traceable": { "type": "boolean" },
+            "score": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "reasons": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": true
+        },
+        "minimum_fields": {
+          "type": "object",
+          "required": ["objective", "scope", "success_criteria", "constraints", "budget_or_deadline"],
+          "properties": {
+            "objective": { "type": "boolean" },
+            "scope": { "type": "boolean" },
+            "success_criteria": { "type": "boolean" },
+            "constraints": { "type": "boolean" },
+            "budget_or_deadline": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "missing_fields": { "type": "array", "items": { "type": "string" } },
+        "clarifying_questions": { "type": "array", "items": { "type": "string" } },
+        "recommended_path": {
+          "enum": ["normal_prompt", "clarify", "confirm_delegation", "create_loop", "reject"]
+        },
+        "preferred_expert": { "type": ["string", "null"] },
+        "extracted": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

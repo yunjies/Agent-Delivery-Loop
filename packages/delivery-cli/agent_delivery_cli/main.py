@@ -10,9 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
 sys.path.insert(0, str(ROOT / "packages" / "delivery-supervisor-sdk"))
+sys.path.insert(0, str(ROOT / "packages" / "requester-sdk"))
 sys.path.insert(0, str(ROOT / "adapters" / "filesystem"))
 
 from agent_delivery_loop import FilesystemStore, KIND_DIRS
+from agent_delivery_requester import classify_intake, create_goal_from_demand, promote_intake_to_demand
 from agent_delivery_supervisor import review_attempt
 from agent_delivery_filesystem import FilesystemWorkspace
 
@@ -23,6 +25,15 @@ def main(argv=None):
 
     sub.add_parser("validate", help="Validate protocol JSON and fixtures")
     sub.add_parser("release-check", help="Run the v0 release verification checks")
+
+    intake_parser = sub.add_parser("intake", help="Classify a raw request before creating a loop")
+    intake_parser.add_argument("request")
+    intake_parser.add_argument("--requester-id", default="requester-example")
+    intake_parser.add_argument("--requester-kind", default="human")
+    intake_parser.add_argument("--source", default="cli")
+    intake_parser.add_argument("--preferred-expert")
+    intake_parser.add_argument("--workspace")
+    intake_parser.add_argument("--promote", action="store_true", help="Create Demand and Goal if intake is loop_candidate")
 
     init_parser = sub.add_parser("init-workspace", help="Initialize a filesystem workspace")
     init_parser.add_argument("path")
@@ -59,6 +70,32 @@ def main(argv=None):
         return 0
     if args.command == "release-check":
         runpy.run_path(str(ROOT / "scripts" / "release-check.py"), run_name="__main__")
+        return 0
+    if args.command == "intake":
+        assessment = classify_intake(
+            args.request,
+            requester={"kind": args.requester_kind, "id": args.requester_id},
+            source=args.source,
+            preferred_expert=args.preferred_expert,
+        )
+        output = {"ok": True, "assessment": assessment}
+        if args.workspace:
+            store = FilesystemStore(args.workspace).init()
+            store.save(assessment)
+            output["saved"] = {"kind": "IntakeAssessment", "id": assessment["metadata"]["id"]}
+            if args.promote:
+                demand = promote_intake_to_demand(assessment)
+                goal = create_goal_from_demand(demand)
+                store.save(demand)
+                store.save(goal)
+                output["promoted"] = {
+                    "demand_id": demand["metadata"]["id"],
+                    "goal_id": goal["metadata"]["id"],
+                }
+        elif args.promote:
+            output["promoted"] = None
+            output["promotion_error"] = "promotion requires --workspace"
+        print(json.dumps(output, ensure_ascii=False, indent=2))
         return 0
     if args.command == "init-workspace":
         FilesystemStore(args.path).init()

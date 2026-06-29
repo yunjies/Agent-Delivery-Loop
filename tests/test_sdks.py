@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
 
 from agent_delivery_expert import create_attempt
 from agent_delivery_loop import validate_object
-from agent_delivery_requester import create_demand, create_goal_from_demand
+from agent_delivery_requester import classify_intake, create_demand, create_goal_from_demand, promote_intake_to_demand
 from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task, review_attempt
 
 
@@ -29,6 +29,39 @@ class SdkTests(unittest.TestCase):
         self.assertTrue(validate_object(demand))
         self.assertTrue(validate_object(goal))
         self.assertEqual(goal["metadata"]["demand_id"], demand["metadata"]["id"])
+
+    def test_requester_classifies_simple_prompt_outside_loop(self):
+        assessment = classify_intake(
+            "查一下今天的天气",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        self.assertTrue(validate_object(assessment))
+        self.assertEqual(assessment["spec"]["classification"], "simple_prompt")
+        self.assertEqual(assessment["spec"]["recommended_path"], "normal_prompt")
+
+    def test_requester_clarifies_loop_candidate_with_missing_fields(self):
+        assessment = classify_intake(
+            "持续跟踪 wiki 状态，后续需要汇报和验收",
+            requester={"kind": "human", "id": "requester-example"},
+            preferred_expert="mind-palace",
+        )
+        self.assertTrue(validate_object(assessment))
+        self.assertEqual(assessment["spec"]["classification"], "needs_clarification")
+        self.assertIn("budget_or_deadline", assessment["spec"]["missing_fields"])
+        self.assertGreater(len(assessment["spec"]["clarifying_questions"]), 0)
+
+    def test_requester_promotes_complete_loop_intake_to_demand(self):
+        assessment = classify_intake(
+            "整理 Mind Palace wiki，先巡检再输出修复计划，不要直接写回，今天完成。",
+            requester={"kind": "human", "id": "requester-example"},
+            preferred_expert="mind-palace",
+        )
+        self.assertEqual(assessment["spec"]["classification"], "loop_candidate")
+        demand = promote_intake_to_demand(assessment)
+        goal = create_goal_from_demand(demand)
+        self.assertTrue(validate_object(demand))
+        self.assertTrue(validate_object(goal))
+        self.assertEqual(demand["spec"]["permissions"]["docs_write"], False)
 
     def test_expert_creates_valid_attempt(self):
         task = {

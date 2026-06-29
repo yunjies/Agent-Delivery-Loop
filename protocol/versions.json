@@ -4,7 +4,7 @@
     {
       "version": "0.1.0",
       "status": "ready",
-      "description": "Initial Agent Delivery Loop framework baseline with protocol schemas, SDK helpers, deterministic supervisor review, filesystem runner, adapters, CLI, tests, and Hermes skeleton pilot evidence"
+      "description": "Initial Agent Delivery Loop framework baseline with intake classification, protocol schemas, SDK helpers, deterministic supervisor review, filesystem runner, adapters, CLI, tests, and Hermes skeleton pilot evidence"
     }
   ]
 }

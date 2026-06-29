@@ -6,6 +6,7 @@ This plan describes how Hermes can implement Agent Delivery Loop without changin
 
 Hermes acts as one runtime that can host:
 
+- requester-side delegation skills for Duoduo, Codex handoff, and Feishu private messages;
 - a Delivery Supervisor profile;
 - expert profiles;
 - workflow experts;
@@ -19,11 +20,11 @@ The Delivery Supervisor remains supervisory. It does not implement business work
 ### delivery-supervisor
 
 Purpose:
-- receive approved demands;
+- receive loop-candidate demands after intake;
 - maintain Goal and Task state;
 - run objective-loop review;
 - select experts through the expert registry;
-- request approval for high-risk work;
+- request approval for high-risk system work;
 - send supervision reports and notifications.
 
 Default permissions:
@@ -51,7 +52,7 @@ Initial candidates:
 - `mind-palace`: wiki and knowledge maintenance;
 - `ops-auditor`: runtime health and report-only audits;
 - `model-maintainer`: model registry and smoke tests;
-- `lark-operator`: Feishu operations when explicitly approved.
+- `lark-operator`: Feishu operations.
 
 The profile name is not the protocol role. It is an expert implementation behind the Hermes adapter.
 
@@ -85,6 +86,8 @@ Disallowed bot actions:
 - send business-domain content as if it were the domain expert;
 - operate Feishu business data unless a Task explicitly delegates that to a Feishu expert.
 
+Feishu business actions do not require a separate approval by default. They require a Task delegated to a Feishu-capable expert with the right capability and permission declaration. Approval is reserved for high-risk system actions such as cron mutation, workflow mutation, profile or skill mutation, destructive archive/delete/move, unrestricted shell, or privileged writeback.
+
 If the user does not create a new bot, the first pilot can run without Feishu delivery and write reports to filesystem evidence only.
 
 Credential rule:
@@ -98,6 +101,8 @@ Recommended state roots:
 
 ```text
 /opt/data/agent-delivery-loop/
+  intake/
+  inbox/
   goals/
   tasks/
   attempts/
@@ -132,6 +137,56 @@ Initial Hermes workflow candidates:
 - `delivery-loop-notify`: approved notification delivery.
 
 A0-A2 should not enable cron or daemons.
+
+## Hermes Skills
+
+Runtime adoption should add small skills so Duoduo and other requester agents do not need to handwrite protocol JSON.
+
+### adl-delegate-task
+
+Purpose:
+- accept a raw request from Duoduo, Codex, or Feishu;
+- create an IntakeAssessment;
+- ask clarification when LIFT or minimum fields fail;
+- promote only `loop_candidate` intake to Demand and Goal;
+- optionally set `preferred_expert`.
+
+Suggested call shape:
+
+```text
+delegate_task(
+  request="整理 Mind Palace wiki，先巡检再输出修复计划，不要直接写回，今天完成。",
+  preferred_expert="mind-palace",
+  source="duoduo"
+)
+```
+
+### adl-register-expert
+
+Purpose:
+- create or update Expert registry entries;
+- record capabilities, permissions, invocation adapter, priority, and evidence contract;
+- validate that registered Hermes profiles, workflows, or scripts exist before enabling them.
+
+### adl-query-status
+
+Purpose:
+- query intake, goal, task, approval, and attempt state;
+- support Feishu private-message commands such as `#status <goal_id>`.
+
+### adl-approval
+
+Purpose:
+- resolve approval records for system-risk gates;
+- keep Feishu business operations outside approval unless the Task itself declares a high-risk system permission.
+
+### adl-supervisor-admin
+
+Purpose:
+- run `supervisor-tick`;
+- inspect runner output;
+- prepare cron binding;
+- keep runtime adoption separate from framework code.
 
 ## First Pilot
 

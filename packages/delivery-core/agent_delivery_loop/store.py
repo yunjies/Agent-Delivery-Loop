@@ -8,6 +8,7 @@ from .validation import validate_object
 
 
 KIND_DIRS = {
+    "IntakeAssessment": "intake",
     "Demand": "demands",
     "Goal": "goals",
     "Task": "tasks",

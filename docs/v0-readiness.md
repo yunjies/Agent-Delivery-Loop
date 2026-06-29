@@ -5,6 +5,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
 ## Included
 
 - Protocol schemas for Demand, Goal, Task, Attempt, Evidence, Budget, Expert, LoopDecision, and Approval.
+- Protocol schema for IntakeAssessment.
 - Minimal fixtures.
 - Delivery core:
   - object validation;
@@ -15,7 +16,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - filesystem store;
   - workspace summary and object listing.
 - SDKs:
-  - Requester SDK;
+  - Requester SDK with intake classification and Demand/Goal creation;
   - Delivery Supervisor SDK with task proposal and deterministic attempt review;
   - Expert Adapter SDK.
 - Adapters:
@@ -29,6 +30,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
 - CLI:
   - `validate`;
   - `release-check`;
+  - `intake`;
   - `demo`;
   - `init-workspace`;
   - `status`;
@@ -67,6 +69,7 @@ Expected:
 - protocol validation succeeds;
 - release check returns `ok: true`;
 - all tests pass;
+- intake can classify simple prompts, clarification cases, and loop candidates;
 - demo returns `ok: true`;
 - demo creates a workspace with Goal, Task, Attempt, LoopDecision, Expert, and event records;
 - `review-attempt` can append a supervisor acceptance decision for the demo attempt.
