@@ -1,5 +1,13 @@
 # Filesystem Adapter
 
-The filesystem adapter will persist Agent Delivery Loop objects as JSON or YAML files.
+The filesystem adapter persists Agent Delivery Loop objects as JSON files and appends JSONL events through the core `FilesystemStore`.
 
-It is the first planned backend for local and NAS-backed pilots.
+It is intended for local demos, NAS-backed pilots, and offline verification. It does not run a daemon, consume queues, call LLMs, or contact external services.
+
+## Minimal Usage
+
+```python
+from agent_delivery_filesystem import FilesystemWorkspace
+
+workspace = FilesystemWorkspace(".adl-workspace")
+```

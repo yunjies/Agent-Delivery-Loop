@@ -24,7 +24,7 @@
 
 ## P3 Adapters
 
-- [ ] Filesystem adapter.
+- [x] Filesystem adapter.
 - [ ] Human approval adapter.
 - [ ] Hermes profile adapter.
 - [ ] Hermes workflow adapter.
@@ -33,6 +33,6 @@
 
 ## P4 Pilot
 
-- [ ] Run a filesystem-only minimal loop.
+- [x] Run a filesystem-only minimal loop.
 - [ ] Add Mind Palace as the first Hermes integration pilot.
 - [ ] Keep writeback, cron mutation, and archive actions approval-gated.

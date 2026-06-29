@@ -1,0 +1,102 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
+sys.path.insert(0, str(ROOT / "packages" / "requester-sdk"))
+sys.path.insert(0, str(ROOT / "packages" / "delivery-supervisor-sdk"))
+sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
+
+from agent_delivery_expert import create_attempt
+from agent_delivery_loop import FilesystemStore, rank_experts, transition_task
+from agent_delivery_requester import create_demand, create_goal_from_demand
+from agent_delivery_supervisor import create_loop_decision, create_task
+
+
+class FilesystemWorkspace:
+    """A minimal local workspace for supervised delivery loops."""
+
+    def __init__(self, root):
+        self.root = Path(root)
+        self.store = FilesystemStore(self.root).init()
+
+    def register_expert(self, expert):
+        self.store.save(expert)
+        return expert
+
+    def start_goal(self, title, request, requester, success_criteria=None, budget=None, permissions=None):
+        demand = create_demand(
+            title=title,
+            request=request,
+            requester=requester,
+            success_criteria=success_criteria,
+            budget=budget,
+            permissions=permissions,
+        )
+        goal = create_goal_from_demand(demand)
+        self.store.save(demand)
+        self.store.save(goal)
+        return demand, goal
+
+    def propose_task(self, goal, task_type, objective, experts, permissions, acceptance, required_capabilities=None, budget=None):
+        ranked = rank_experts(
+            {"spec": {"objective": objective, "required_capabilities": list(required_capabilities or [])}},
+            experts,
+        )
+        if not ranked or ranked[0]["score"] <= 0:
+            decision = create_loop_decision(
+                goal,
+                action="mark_blocked",
+                reason="No matching expert found for task proposal.",
+                risk_assessment={"high_risk": False, "gate_required": False},
+            )
+            self.store.save(decision)
+            return None, decision, ranked
+
+        selected = ranked[0]["expert_id"]
+        task = create_task(
+            goal,
+            task_type=task_type,
+            objective=objective,
+            assignee={"kind": "expert", "id": selected},
+            permissions=permissions,
+            acceptance=acceptance,
+            budget=budget,
+            required_capabilities=required_capabilities,
+        )
+        decision = create_loop_decision(
+            goal,
+            action="create_task",
+            reason=f"Selected expert {selected} for {task_type}.",
+            next_task={"ref": task["metadata"]["id"]},
+            budget_assessment={"within_budget": True},
+            risk_assessment={"high_risk": False, "gate_required": False},
+        )
+        self.store.save(task)
+        self.store.save(decision)
+        return task, decision, ranked
+
+    def submit_attempt(self, task, executor, status, summary, evidence=None, budget_used=None, error=None):
+        running = transition_task(task, "running")
+        submitted = transition_task(running, "submitted")
+        attempt = create_attempt(
+            submitted,
+            executor=executor,
+            status=status,
+            summary=summary,
+            evidence=evidence,
+            budget_used=budget_used,
+            error=error,
+        )
+        submitted["spec"]["state"]["latest_attempt_id"] = attempt["metadata"]["id"]
+        self.store.save(submitted)
+        self.store.save(attempt)
+        return attempt
+
+    def accept_task(self, task):
+        task = transition_task(task, "accepted")
+        self.store.save(task)
+        return task

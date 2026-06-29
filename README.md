@@ -64,6 +64,12 @@ Run core tests without external dependencies:
 python -m unittest discover -s tests
 ```
 
+Run the minimal filesystem loop demo:
+
+```bash
+python examples/minimal/run_minimal_loop.py --reset
+```
+
 ## Design Rules
 
 - Execution and supervision are separate.
