@@ -36,3 +36,11 @@
 - [x] Run a filesystem-only minimal loop.
 - [ ] Add Mind Palace as the first Hermes integration pilot.
 - [ ] Keep writeback, cron mutation, and archive actions approval-gated.
+
+## P5 Local Framework Readiness
+
+- [x] CLI validates protocol.
+- [x] CLI initializes filesystem workspace.
+- [x] CLI summarizes workspace status.
+- [x] CLI lists workspace objects.
+- [x] v0 readiness document exists.

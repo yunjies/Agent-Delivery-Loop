@@ -42,6 +42,30 @@ class FilesystemStore:
         path = self.root / KIND_DIRS[kind] / f"{obj_id}.json"
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def list_objects(self, kind):
+        directory = self.root / KIND_DIRS[kind]
+        if not directory.exists():
+            return []
+        objects = []
+        for path in sorted(directory.glob("*.json")):
+            objects.append(json.loads(path.read_text(encoding="utf-8")))
+        return objects
+
+    def summary(self):
+        counts = {}
+        for kind in KIND_DIRS:
+            counts[kind] = len(self.list_objects(kind))
+        event_count = 0
+        events_dir = self.root / "events"
+        if events_dir.exists():
+            for path in events_dir.glob("*.jsonl"):
+                event_count += len([line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()])
+        return {
+            "workspace": str(self.root),
+            "counts": counts,
+            "events": event_count,
+        }
+
     def append_event(self, kind, obj_id, event_type, payload):
         events_dir = self.root / "events"
         events_dir.mkdir(parents=True, exist_ok=True)

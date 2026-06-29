@@ -77,6 +77,8 @@ Or use the local CLI:
 python scripts/adl.py validate
 python scripts/adl.py demo --reset
 python scripts/adl.py init-workspace /tmp/adl-workspace
+python scripts/adl.py status /tmp/adl-workspace
+python scripts/adl.py list /tmp/adl-workspace Goal
 ```
 
 ## Design Rules
@@ -89,3 +91,7 @@ python scripts/adl.py init-workspace /tmp/adl-workspace
 - Budgets are first-class constraints.
 - Expert routing is capability-based, not identity-based.
 - Framework-specific agents are adapter targets, not protocol roles.
+
+## Readiness
+
+See [docs/v0-readiness.md](docs/v0-readiness.md) for the current local framework readiness boundary and verification commands.

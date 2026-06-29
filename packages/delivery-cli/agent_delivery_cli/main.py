@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
 
-from agent_delivery_loop import FilesystemStore
+from agent_delivery_loop import FilesystemStore, KIND_DIRS
 
 
 def main(argv=None):
@@ -22,9 +22,16 @@ def main(argv=None):
     init_parser = sub.add_parser("init-workspace", help="Initialize a filesystem workspace")
     init_parser.add_argument("path")
 
+    status_parser = sub.add_parser("status", help="Summarize a filesystem workspace")
+    status_parser.add_argument("workspace")
+
+    list_parser = sub.add_parser("list", help="List objects from a filesystem workspace")
+    list_parser.add_argument("workspace")
+    list_parser.add_argument("kind", choices=sorted(KIND_DIRS))
+
     show_parser = sub.add_parser("show", help="Show an object from a filesystem workspace")
     show_parser.add_argument("workspace")
-    show_parser.add_argument("kind")
+    show_parser.add_argument("kind", choices=sorted(KIND_DIRS))
     show_parser.add_argument("id")
 
     demo_parser = sub.add_parser("demo", help="Run the minimal filesystem demo")
@@ -38,6 +45,20 @@ def main(argv=None):
     if args.command == "init-workspace":
         FilesystemStore(args.path).init()
         print(json.dumps({"ok": True, "workspace": args.path}, ensure_ascii=False))
+        return 0
+    if args.command == "status":
+        print(json.dumps(FilesystemStore(args.workspace).summary(), ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "list":
+        objects = FilesystemStore(args.workspace).list_objects(args.kind)
+        print(json.dumps([
+            {
+                "id": obj.get("metadata", {}).get("id"),
+                "title": obj.get("metadata", {}).get("title"),
+                "status": obj.get("spec", {}).get("state", {}).get("status"),
+            }
+            for obj in objects
+        ], ensure_ascii=False, indent=2))
         return 0
     if args.command == "show":
         obj = FilesystemStore(args.workspace).load(args.kind, args.id)
