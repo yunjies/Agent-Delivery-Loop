@@ -58,6 +58,12 @@ python scripts/validate-protocol.py
 
 The script uses only the Python standard library and verifies that protocol schemas and fixtures are valid JSON.
 
+Run core tests without external dependencies:
+
+```bash
+python -m unittest discover -s tests
+```
+
 ## Design Rules
 
 - Execution and supervision are separate.

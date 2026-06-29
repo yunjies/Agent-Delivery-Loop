@@ -1,5 +1,5 @@
 # Requester SDK
 
-Placeholder package for creating Demand and Goal payloads.
+Helpers for creating Demand and Goal payloads.
 
-The Requester SDK should not execute delivery work.
+The Requester SDK does not execute delivery work.

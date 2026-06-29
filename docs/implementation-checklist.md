@@ -2,25 +2,25 @@
 
 ## P0 Protocol Baseline
 
-- [ ] Define v0 schemas.
-- [ ] Add fixtures for a minimal loop.
-- [ ] Add schema validation tests.
-- [ ] Document Requester, Delivery Supervisor, and Expert roles.
-- [ ] Document permissions and budget rules.
+- [x] Define v0 schemas.
+- [x] Add fixtures for a minimal loop.
+- [x] Add schema validation tests.
+- [x] Document Requester, Delivery Supervisor, and Expert roles.
+- [x] Document permissions and budget rules.
 
 ## P1 Core Library
 
-- [ ] Validate protocol objects.
-- [ ] Create loop state transitions.
-- [ ] Add budget checks.
-- [ ] Add permission checks.
-- [ ] Add routing policy scoring.
+- [x] Validate protocol objects.
+- [x] Create loop state transitions.
+- [x] Add budget checks.
+- [x] Add permission checks.
+- [x] Add routing policy scoring.
 
 ## P2 SDKs
 
-- [ ] Requester SDK creates Demand and Goal payloads.
-- [ ] Delivery Supervisor SDK creates Task proposals and LoopDecision records.
-- [ ] Expert Adapter SDK reports Attempt results and Evidence.
+- [x] Requester SDK creates Demand and Goal payloads.
+- [x] Delivery Supervisor SDK creates Task proposals and LoopDecision records.
+- [x] Expert Adapter SDK reports Attempt results and Evidence.
 
 ## P3 Adapters
 
@@ -36,4 +36,3 @@
 - [ ] Run a filesystem-only minimal loop.
 - [ ] Add Mind Palace as the first Hermes integration pilot.
 - [ ] Keep writeback, cron mutation, and archive actions approval-gated.
-
