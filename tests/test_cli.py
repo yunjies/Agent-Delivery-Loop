@@ -40,6 +40,18 @@ class CliTests(unittest.TestCase):
             listed = json.loads(goals.stdout)
             self.assertEqual(len(listed), 1)
             self.assertEqual(listed[0]["status"], "active")
+
+            status = json.loads(self.run_cli("status", str(demo_workspace)).stdout)
+            goal_id = next((demo_workspace / "goals").glob("*.json")).stem
+            task_id = next((demo_workspace / "tasks").glob("*.json")).stem
+            attempt_id = next((demo_workspace / "attempts").glob("*.json")).stem
+            before_decisions = status["counts"]["LoopDecision"]
+            review = self.run_cli("review-attempt", str(demo_workspace), goal_id, task_id, attempt_id)
+            review_payload = json.loads(review.stdout)
+            self.assertEqual(review_payload["task_status"], "accepted")
+            self.assertEqual(review_payload["decision_action"], "mark_complete")
+            after = json.loads(self.run_cli("status", str(demo_workspace)).stdout)
+            self.assertEqual(after["counts"]["LoopDecision"], before_decisions + 1)
         finally:
             shutil.rmtree(tempdir)
 

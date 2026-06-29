@@ -9,8 +9,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
+sys.path.insert(0, str(ROOT / "packages" / "delivery-supervisor-sdk"))
 
 from agent_delivery_loop import FilesystemStore, KIND_DIRS
+from agent_delivery_supervisor import review_attempt
 
 
 def main(argv=None):
@@ -33,6 +35,12 @@ def main(argv=None):
     show_parser.add_argument("workspace")
     show_parser.add_argument("kind", choices=sorted(KIND_DIRS))
     show_parser.add_argument("id")
+
+    review_parser = sub.add_parser("review-attempt", help="Review an Attempt and write the supervisor decision")
+    review_parser.add_argument("workspace")
+    review_parser.add_argument("goal_id")
+    review_parser.add_argument("task_id")
+    review_parser.add_argument("attempt_id")
 
     demo_parser = sub.add_parser("demo", help="Run the minimal filesystem demo")
     demo_parser.add_argument("--reset", action="store_true")
@@ -63,6 +71,23 @@ def main(argv=None):
     if args.command == "show":
         obj = FilesystemStore(args.workspace).load(args.kind, args.id)
         print(json.dumps(obj, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "review-attempt":
+        store = FilesystemStore(args.workspace).init()
+        goal = store.load("Goal", args.goal_id)
+        task = store.load("Task", args.task_id)
+        attempt = store.load("Attempt", args.attempt_id)
+        updated_task, decision = review_attempt(goal, task, attempt)
+        store.save(updated_task)
+        store.save(decision)
+        print(json.dumps({
+            "ok": True,
+            "task_id": updated_task["metadata"]["id"],
+            "task_status": updated_task["spec"]["state"]["status"],
+            "decision_id": decision["metadata"]["id"],
+            "decision_action": decision["spec"]["action"],
+            "next_prompt": decision["spec"].get("next_prompt"),
+        }, ensure_ascii=False, indent=2))
         return 0
     if args.command == "demo":
         demo_args = []

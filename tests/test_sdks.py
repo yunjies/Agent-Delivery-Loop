@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
 from agent_delivery_expert import create_attempt
 from agent_delivery_loop import validate_object
 from agent_delivery_requester import create_demand, create_goal_from_demand
-from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task
+from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task, review_attempt
 
 
 class SdkTests(unittest.TestCase):
@@ -115,6 +115,191 @@ class SdkTests(unittest.TestCase):
         self.assertIsNone(task)
         self.assertEqual(decision["spec"]["action"], "request_approval")
         self.assertEqual(ranked[0]["expert_id"], "archiver")
+
+    def test_delivery_supervisor_accepts_successful_attempt_with_evidence(self):
+        demand = create_demand(
+            title="Maintain wiki health",
+            request="Keep the wiki healthy",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="workflow_run",
+            objective="Run lint report",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True, "expected_evidence": ["report"]},
+            required_capabilities=["wiki_lint"],
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        attempt = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="Report completed",
+            evidence=[{"kind": "report", "path": "/tmp/report.md"}],
+            budget_used={"token_used_estimate": 100},
+        )
+        updated, decision = review_attempt(goal, task, attempt)
+        self.assertEqual(updated["spec"]["state"]["status"], "accepted")
+        self.assertEqual(decision["spec"]["action"], "mark_complete")
+        self.assertEqual(decision["spec"]["review_feedback"]["ok"], True)
+
+    def test_delivery_supervisor_rejects_missing_evidence_and_prompts_rework(self):
+        demand = create_demand(
+            title="Maintain wiki health",
+            request="Keep the wiki healthy",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="workflow_run",
+            objective="Run lint report",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True, "expected_evidence": ["report"]},
+            required_capabilities=["wiki_lint"],
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        attempt = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="Report completed without artifact",
+            evidence=[],
+            budget_used={"token_used_estimate": 100},
+        )
+        updated, decision = review_attempt(goal, task, attempt)
+        self.assertEqual(updated["spec"]["state"]["status"], "rejected")
+        self.assertEqual(decision["spec"]["action"], "create_task")
+        self.assertIn("next_prompt", decision["spec"])
+        self.assertEqual(decision["spec"]["review_feedback"]["ok"], False)
+
+    def test_delivery_supervisor_requests_human_acceptance_when_required(self):
+        demand = create_demand(
+            title="Review wiki writeback",
+            request="Review the proposed writeback",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="review",
+            objective="Review writeback proposal",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True, "expected_evidence": ["report"], "human_approval_required": True},
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        attempt = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="Proposal ready",
+            evidence=[{"kind": "report", "path": "/tmp/proposal.md"}],
+            budget_used={"token_used_estimate": 100},
+        )
+        updated, decision = review_attempt(goal, task, attempt)
+        self.assertEqual(updated["spec"]["state"]["status"], "submitted")
+        self.assertEqual(decision["spec"]["action"], "request_approval")
+        self.assertEqual(decision["spec"]["required_approval"]["approval_type"], "human_acceptance")
+
+    def test_delivery_supervisor_marks_blocked_attempt(self):
+        demand = create_demand(
+            title="Run workflow",
+            request="Run a workflow",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="workflow_run",
+            objective="Run workflow",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True},
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        attempt = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="blocked",
+            summary="Missing runtime permission",
+            evidence=[],
+            budget_used={"token_used_estimate": 100},
+            error="missing permission",
+        )
+        updated, decision = review_attempt(goal, task, attempt)
+        self.assertEqual(updated["spec"]["state"]["status"], "blocked")
+        self.assertEqual(decision["spec"]["action"], "mark_blocked")
+
+    def test_delivery_supervisor_stops_review_when_budget_exhausted(self):
+        demand = create_demand(
+            title="Maintain wiki health",
+            request="Keep the wiki healthy",
+            requester={"kind": "human", "id": "requester-example"},
+            budget={"token_limit": 1000, "token_used_estimate": 950, "stop_when_remaining_below": 100},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="workflow_run",
+            objective="Run lint report",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True},
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        attempt = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="Report completed",
+            evidence=[{"kind": "report", "path": "/tmp/report.md"}],
+            budget_used={"token_used_estimate": 100},
+        )
+        updated, decision = review_attempt(goal, task, attempt)
+        self.assertEqual(updated["spec"]["state"]["status"], "submitted")
+        self.assertEqual(decision["spec"]["action"], "stop_budget")
+        self.assertEqual(decision["spec"]["budget_assessment"]["within_budget"], False)
+
+    def test_delivery_supervisor_review_decisions_do_not_collide_between_attempts(self):
+        demand = create_demand(
+            title="Maintain wiki health",
+            request="Keep the wiki healthy",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        task = create_task(
+            goal,
+            task_type="workflow_run",
+            objective="Run lint report",
+            assignee={"kind": "expert", "id": "mind-palace"},
+            permissions={"docs_write": False},
+            acceptance={"evidence_required": True, "expected_evidence": ["report"]},
+        )
+        task["spec"]["state"]["status"] = "submitted"
+        first = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="First report completed",
+            evidence=[{"kind": "report", "path": "/tmp/first-report.md"}],
+            budget_used={"token_used_estimate": 100},
+        )
+        second = create_attempt(
+            task,
+            executor={"kind": "expert", "id": "mind-palace"},
+            status="succeeded",
+            summary="Second report completed",
+            evidence=[{"kind": "report", "path": "/tmp/second-report.md"}],
+            budget_used={"token_used_estimate": 100},
+        )
+        _, first_decision = review_attempt(goal, dict(task), first)
+        _, second_decision = review_attempt(goal, dict(task), second)
+        self.assertNotEqual(first_decision["metadata"]["id"], second_decision["metadata"]["id"])
 
 
 if __name__ == "__main__":

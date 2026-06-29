@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "packages" / "expert-adapter-sdk"))
 from agent_delivery_expert import create_attempt
 from agent_delivery_loop import FilesystemStore, rank_experts, transition_task
 from agent_delivery_requester import create_demand, create_goal_from_demand
-from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task
+from agent_delivery_supervisor import create_loop_decision, create_task, propose_next_task, review_attempt
 
 
 class FilesystemWorkspace:
@@ -80,3 +80,9 @@ class FilesystemWorkspace:
         task = transition_task(task, "accepted")
         self.store.save(task)
         return task
+
+    def review_attempt(self, goal, task, attempt):
+        updated_task, decision = review_attempt(goal, task, attempt)
+        self.store.save(updated_task)
+        self.store.save(decision)
+        return updated_task, decision

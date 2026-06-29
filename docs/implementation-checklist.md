@@ -35,8 +35,8 @@
 ## P4 Pilot
 
 - [x] Run a filesystem-only minimal loop.
-- [ ] Add Mind Palace as the first Hermes integration pilot.
-- [ ] Keep writeback, cron mutation, and archive actions approval-gated.
+- [x] Add Mind Palace as the first Hermes integration pilot.
+- [x] Keep writeback, cron mutation, and archive actions approval-gated.
 
 ## P5 Local Framework Readiness
 
@@ -44,4 +44,13 @@
 - [x] CLI initializes filesystem workspace.
 - [x] CLI summarizes workspace status.
 - [x] CLI lists workspace objects.
+- [x] CLI reviews attempts and writes supervisor decisions.
 - [x] v0 readiness document exists.
+
+## P6 Supervisor Loop Usability
+
+- [x] Deterministic attempt review accepts successful evidence.
+- [x] Deterministic attempt review rejects missing evidence and generates a rework prompt.
+- [x] Deterministic attempt review requests approval when human acceptance is required.
+- [x] Deterministic attempt review marks blocked attempts as blocked.
+- [x] Deterministic attempt review stops when budget thresholds are exhausted.

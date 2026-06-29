@@ -42,14 +42,17 @@ tests/                Protocol and compatibility tests
 
 ## v0 Scope
 
-v0 defines the protocol surface only:
+v0 defines a local supervised delivery-loop framework:
 
-- schemas for Demand, Goal, Task, Attempt, Evidence, Budget, Expert, and LoopDecision;
-- minimal fixtures;
-- repository structure for future SDKs and adapters;
-- no daemon;
-- no automatic task consumer;
-- no live production integration.
+- schemas for Demand, Goal, Task, Attempt, Evidence, Budget, Expert, Approval, and LoopDecision;
+- minimal fixtures and validation;
+- core lifecycle, permissions, budget, routing, and filesystem store helpers;
+- requester, supervisor, and expert SDK helpers;
+- deterministic supervisor attempt review that can accept, reject, block, stop for budget, request approval, or generate a rework prompt;
+- local filesystem workspace and CLI;
+- payload adapters for Hermes, Codex, Claude Code, human approval, and Feishu notification payloads.
+
+v0 does not include a daemon, automatic queue consumer, direct external-agent execution, or live notification delivery.
 
 ## Validate
 
@@ -79,6 +82,7 @@ python scripts/adl.py demo --reset
 python scripts/adl.py init-workspace /tmp/adl-workspace
 python scripts/adl.py status /tmp/adl-workspace
 python scripts/adl.py list /tmp/adl-workspace Goal
+python scripts/adl.py review-attempt /tmp/adl-workspace <goal-id> <task-id> <attempt-id>
 ```
 
 ## Design Rules
@@ -96,3 +100,5 @@ python scripts/adl.py list /tmp/adl-workspace Goal
 ## Readiness
 
 See [docs/v0-readiness.md](docs/v0-readiness.md) for the current local framework readiness boundary and verification commands.
+
+See [docs/hermes-runtime-pilot-2026-06-29.md](docs/hermes-runtime-pilot-2026-06-29.md) for the first Hermes-side Delivery Supervisor skeleton rollout evidence.

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "delivery-core"))
 
 from agent_delivery_loop import rank_experts, should_stop_for_budget
+from agent_delivery_loop import transition_task
 
 from .decision import create_loop_decision
 from .task import create_task
@@ -95,6 +96,102 @@ def propose_next_task(goal, experts, task_spec):
     return task, decision, ranked
 
 
+def review_attempt(goal, task, attempt):
+    """Return (updated_task, decision) after deterministic supervisor review."""
+
+    _assert_attempt_matches(goal, task, attempt)
+    if should_stop_for_budget(goal.get("spec", {}).get("budget") or {}):
+        decision = create_loop_decision(
+            goal,
+            action="stop_budget",
+            reason="Goal budget is below the stop threshold during attempt review.",
+            budget_assessment={"within_budget": False},
+            risk_assessment={"high_risk": False, "gate_required": True},
+            review_feedback={"task_id": task["metadata"]["id"], "attempt_id": attempt["metadata"]["id"]},
+        )
+        return task, decision
+
+    result = attempt["spec"]["result"]
+    status = result["status"]
+    if status == "succeeded":
+        evidence_check = _with_review_refs(_check_evidence(task, attempt), task, attempt)
+        if not evidence_check["ok"]:
+            updated = _transition_review_task(task, "rejected")
+            prompt = _rework_prompt(task, attempt, evidence_check["reason"])
+            decision = create_loop_decision(
+                goal,
+                action="create_task",
+                reason="Attempt succeeded but did not satisfy acceptance evidence requirements.",
+                next_task={
+                    "source_task_id": task["metadata"]["id"],
+                    "objective": prompt,
+                    "required_capabilities": task["spec"].get("required_capabilities", []),
+                },
+                budget_assessment={"within_budget": True},
+                risk_assessment={"high_risk": False, "gate_required": False},
+                review_feedback=evidence_check,
+                next_prompt=prompt,
+            )
+            return updated, decision
+
+        if task["spec"].get("acceptance", {}).get("human_approval_required"):
+            decision = create_loop_decision(
+                goal,
+                action="request_approval",
+                reason="Attempt satisfies deterministic checks but requires human approval.",
+                required_approval={
+                    "task_id": task["metadata"]["id"],
+                    "attempt_id": attempt["metadata"]["id"],
+                    "approval_type": "human_acceptance",
+                },
+                budget_assessment={"within_budget": True},
+                risk_assessment={"high_risk": False, "gate_required": True},
+                review_feedback=evidence_check,
+            )
+            return task, decision
+
+        updated = _transition_review_task(task, "accepted")
+        decision = create_loop_decision(
+            goal,
+            action="mark_complete",
+            reason="Attempt satisfies acceptance requirements.",
+            budget_assessment={"within_budget": True},
+            risk_assessment={"high_risk": False, "gate_required": False},
+            review_feedback=evidence_check,
+        )
+        return updated, decision
+
+    if status == "blocked":
+        updated = _transition_review_task(task, "blocked")
+        decision = create_loop_decision(
+            goal,
+            action="mark_blocked",
+            reason=result.get("error") or result.get("summary") or "Expert reported the task as blocked.",
+            budget_assessment={"within_budget": True},
+            risk_assessment={"high_risk": False, "gate_required": False},
+            review_feedback={"task_id": task["metadata"]["id"], "attempt_id": attempt["metadata"]["id"], "status": status},
+        )
+        return updated, decision
+
+    updated = _transition_review_task(task, "rejected")
+    prompt = _rework_prompt(task, attempt, result.get("error") or result.get("summary") or f"Attempt status was {status}.")
+    decision = create_loop_decision(
+        goal,
+        action="create_task",
+        reason=f"Attempt did not complete successfully: {status}.",
+        next_task={
+            "source_task_id": task["metadata"]["id"],
+            "objective": prompt,
+            "required_capabilities": task["spec"].get("required_capabilities", []),
+        },
+        budget_assessment={"within_budget": True},
+        risk_assessment={"high_risk": False, "gate_required": False},
+        review_feedback={"task_id": task["metadata"]["id"], "attempt_id": attempt["metadata"]["id"], "status": status},
+        next_prompt=prompt,
+    )
+    return updated, decision
+
+
 def _high_risk_permissions(permissions):
     return [
         key for key, value in permissions.items()
@@ -104,3 +201,73 @@ def _high_risk_permissions(permissions):
 
 def _is_high_risk(permissions):
     return bool(_high_risk_permissions(permissions))
+
+
+def _assert_attempt_matches(goal, task, attempt):
+    goal_id = goal["metadata"]["id"]
+    task_id = task["metadata"]["id"]
+    if task["metadata"]["goal_id"] != goal_id:
+        raise ValueError("task does not belong to goal")
+    if attempt["metadata"]["goal_id"] != goal_id:
+        raise ValueError("attempt does not belong to goal")
+    if attempt["metadata"]["task_id"] != task_id:
+        raise ValueError("attempt does not belong to task")
+
+
+def _check_evidence(task, attempt):
+    acceptance = task["spec"].get("acceptance") or {}
+    evidence = attempt["spec"]["result"].get("evidence") or []
+    if acceptance.get("evidence_required") and not evidence:
+        return {"ok": False, "reason": "required evidence is missing", "evidence_count": 0}
+
+    expected = list(acceptance.get("expected_evidence") or [])
+    missing = []
+    for item in expected:
+        if not _evidence_matches(item, evidence):
+            missing.append(item)
+    if missing:
+        return {
+            "ok": False,
+            "reason": "expected evidence is missing",
+            "missing_evidence": missing,
+            "evidence_count": len(evidence),
+        }
+    return {"ok": True, "reason": "acceptance evidence satisfied", "evidence_count": len(evidence)}
+
+
+def _with_review_refs(feedback, task, attempt):
+    enriched = dict(feedback)
+    enriched["task_id"] = task["metadata"]["id"]
+    enriched["attempt_id"] = attempt["metadata"]["id"]
+    return enriched
+
+
+def _evidence_matches(expected, evidence):
+    expected = str(expected).lower()
+    for item in evidence:
+        kind = str(item.get("kind", "")).lower()
+        path = str(item.get("path", "")).lower()
+        title = str(item.get("title", "")).lower()
+        if expected in {kind, title} or expected in path:
+            return True
+    return False
+
+
+def _transition_review_task(task, target_status):
+    current = task["spec"]["state"]["status"]
+    if current == target_status:
+        return task
+    if current == "submitted":
+        return transition_task(task, target_status)
+    if current in {"pending", "running"}:
+        submitted = transition_task(task, "submitted") if current == "running" else transition_task(transition_task(task, "running"), "submitted")
+        return transition_task(submitted, target_status)
+    raise ValueError(f"task cannot be reviewed from status: {current}")
+
+
+def _rework_prompt(task, attempt, reason):
+    return (
+        f"Rework task {task['metadata']['id']}: {task['spec']['objective']} "
+        f"The previous attempt {attempt['metadata']['id']} was not acceptable because {reason}. "
+        "Return a new attempt with complete evidence and a concise summary."
+    )

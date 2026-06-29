@@ -16,7 +16,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - workspace summary and object listing.
 - SDKs:
   - Requester SDK;
-  - Delivery Supervisor SDK;
+  - Delivery Supervisor SDK with task proposal and deterministic attempt review;
   - Expert Adapter SDK.
 - Adapters:
   - filesystem;
@@ -32,7 +32,13 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - `init-workspace`;
   - `status`;
   - `list`;
-  - `show`.
+  - `show`;
+  - `review-attempt`.
+- Hermes skeleton pilot:
+  - Delivery Supervisor profile created in Hermes runtime;
+  - ADL runtime workspace created in Hermes runtime;
+  - Mind Palace expert registered;
+  - dry-run Demand, Goal, Task, Attempt, LoopDecision, and pending Approval recorded.
 
 ## Not Included
 
@@ -40,7 +46,6 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
 - No automatic queue consumer.
 - No direct Codex, Claude Code, or Hermes execution.
 - No Feishu/Lark notification delivery.
-- No production Hermes profile creation.
 - No live cron or workflow mutation.
 
 ## Verification
@@ -58,7 +63,8 @@ Expected:
 - protocol validation succeeds;
 - all tests pass;
 - demo returns `ok: true`;
-- demo creates a workspace with Goal, Task, Attempt, LoopDecision, Expert, and event records.
+- demo creates a workspace with Goal, Task, Attempt, LoopDecision, Expert, and event records;
+- `review-attempt` can append a supervisor acceptance decision for the demo attempt.
 
 ## Framework Boundary
 
@@ -76,12 +82,17 @@ High-risk permissions remain gated:
 - unrestricted shell execution;
 - unapproved external send.
 
-## Next Stage
+## Runtime Integration State
 
-The next stage is runtime integration:
+Hermes skeleton integration has started:
 
-- create a Hermes `delivery-supervisor` profile;
-- bind an optional supervision Feishu bot;
-- register Hermes expert profiles;
-- run a Mind Palace dry-run pilot;
-- keep writeback and mutation approval-gated.
+- Hermes `delivery-supervisor` profile exists;
+- Hermes ADL state root exists;
+- Mind Palace is registered as the first expert;
+- live writeback and mutation are still approval-gated.
+
+Remaining runtime work:
+
+- bind and test an optional supervision Feishu bot;
+- add cron or queue-driven Delivery Supervisor loops;
+- add live execution adapters only behind explicit approval gates.
