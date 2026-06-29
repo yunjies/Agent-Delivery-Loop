@@ -30,6 +30,7 @@
 - [x] Hermes workflow adapter.
 - [x] Codex thread adapter.
 - [x] Claude Code adapter.
+- [x] Feishu notification payload adapter.
 
 ## P4 Pilot
 

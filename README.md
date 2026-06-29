@@ -91,6 +91,7 @@ python scripts/adl.py list /tmp/adl-workspace Goal
 - Budgets are first-class constraints.
 - Expert routing is capability-based, not identity-based.
 - Framework-specific agents are adapter targets, not protocol roles.
+- Notification adapters create payloads only; credentials and delivery belong to controlled runtimes.
 
 ## Readiness
 

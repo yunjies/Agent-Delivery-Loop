@@ -87,6 +87,11 @@ Disallowed bot actions:
 
 If the user does not create a new bot, the first pilot can run without Feishu delivery and write reports to filesystem evidence only.
 
+Credential rule:
+- the app id and secret must be configured only in the Hermes runtime or lark-cli profile;
+- credentials must not be written to Agent Delivery Loop protocol objects, fixtures, docs, tests, or git history;
+- framework adapters may create notification payloads, but sending is a runtime responsibility.
+
 ## Hermes Runtime Surfaces
 
 Recommended state roots:
@@ -161,6 +166,7 @@ G1:
 - create `delivery-supervisor` profile skeleton;
 - no active cron;
 - no daemon.
+- profile details are defined in `examples/integrations/hermes-delivery-supervisor-profile.md`.
 
 G2:
 - create expert registry with existing profiles;
@@ -178,4 +184,3 @@ G5:
 
 G6:
 - decide whether low-risk recurring supervision reports may go on cron.
-

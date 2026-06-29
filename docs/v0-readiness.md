@@ -25,6 +25,7 @@ Agent Delivery Loop v0 is ready as a local framework baseline when the checks be
   - Hermes workflow payload;
   - Codex thread payload;
   - Claude Code payload.
+  - Feishu notification payload.
 - CLI:
   - `validate`;
   - `demo`;
