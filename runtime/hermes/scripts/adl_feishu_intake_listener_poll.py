@@ -14,7 +14,7 @@ def main() -> int:
             "--state-root",
             "/opt/data/agent-delivery-loop",
             "--timeout",
-            "4m",
+            "90s",
             "--max-events",
             "20",
         ]
