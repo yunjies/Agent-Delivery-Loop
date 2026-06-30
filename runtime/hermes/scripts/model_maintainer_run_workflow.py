@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run a Model Maintainer v2 workflow")
+    parser = argparse.ArgumentParser(description="Run a Model Maintainer workflow")
     parser.add_argument("--workflow", required=True)
     parser.add_argument("--trigger", required=True)
     parser.add_argument("--mode", default="production", choices=["shadow", "production"])
