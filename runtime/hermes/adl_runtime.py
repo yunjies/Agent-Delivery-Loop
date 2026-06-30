@@ -19,6 +19,7 @@ for rel in [
     "packages/requester-sdk",
     "packages/expert-adapter-sdk",
     "adapters/feishu-notification",
+    "runtime/hermes/scripts",
 ]:
     sys.path.insert(0, str(FRAMEWORK_ROOT / rel))
 
@@ -26,6 +27,7 @@ from agent_delivery_expert import create_attempt
 from agent_delivery_feishu_notification import create_notification_payload
 from agent_delivery_loop import FilesystemStore, transition_task
 from agent_delivery_requester import classify_intake, create_goal_from_demand, promote_intake_to_demand
+from path_governance_check import check_paths, write_reports
 
 
 SYSTEM_RISK_PERMISSIONS = {
@@ -80,6 +82,9 @@ def main(argv=None) -> int:
     run.add_argument("--trigger", default="agent-delivery-loop")
     run.add_argument("--mode", default="production", choices=["shadow", "production"])
     run.add_argument("--max-ticks", default="8")
+    run.add_argument("--actor-profile")
+    run.add_argument("--changed-path", action="append", default=[])
+    run.add_argument("--strict-unowned-paths", action="store_true")
 
     args = parser.parse_args(argv)
     state_root = Path(args.state_root)
@@ -221,6 +226,10 @@ def _cmd_run_workflow_task(args, state_root: Path) -> int:
     if high_risk:
         print(json.dumps({"ok": False, "error": "task requests high-risk system permissions", "permissions": high_risk}, ensure_ascii=False, indent=2))
         return 2
+    preflight = _workflow_path_preflight(task, args, state_root)
+    if preflight and not preflight["ok"]:
+        print(json.dumps({"ok": False, "error": "path governance preflight failed", "preflight": preflight}, ensure_ascii=False, indent=2))
+        return 3
     workflow_script = [
         "/opt/hermes/.venv/bin/python",
         "/opt/data/scripts/workflow_runtime.py",
@@ -238,7 +247,10 @@ def _cmd_run_workflow_task(args, state_root: Path) -> int:
     completed = subprocess.run(workflow_script, cwd="/opt/data", text=True, capture_output=True, timeout=1200)
     status = "succeeded" if completed.returncode == 0 else "failed"
     summary = _workflow_summary(args.workflow, completed)
-    evidence = [{"kind": "workflow_result", "path": _write_workflow_evidence(state_root, args.task_id, args.workflow, completed)}]
+    evidence = []
+    if preflight:
+        evidence.append({"kind": "path_governance_preflight", "path": _write_path_governance_evidence(state_root, args.task_id, preflight)})
+    evidence.append({"kind": "workflow_result", "path": _write_workflow_evidence(state_root, args.task_id, args.workflow, completed)})
     attempt = create_attempt(
         task,
         executor={"kind": "hermes_workflow", "id": args.workflow},
@@ -253,6 +265,42 @@ def _cmd_run_workflow_task(args, state_root: Path) -> int:
     store.save(attempt)
     print(json.dumps({"ok": completed.returncode == 0, "task_id": args.task_id, "attempt_id": attempt["metadata"]["id"], "status": status}, ensure_ascii=False, indent=2))
     return 0 if completed.returncode == 0 else 1
+
+
+def _workflow_path_preflight(task: dict, args, state_root: Path) -> dict | None:
+    spec = task.get("spec") or {}
+    governance = spec.get("path_governance") or {}
+    planned_paths = list(governance.get("planned_paths") or governance.get("changed_paths") or [])
+    planned_paths.extend(args.changed_path or [])
+    if not planned_paths:
+        return None
+    actor_profile = args.actor_profile or governance.get("actor_profile") or _actor_profile_from_task(task)
+    if not actor_profile:
+        return {
+            "ok": False,
+            "error": "path governance requires actor_profile",
+            "changed_path_count": len(planned_paths),
+            "violations": [{"message": "missing actor_profile"}],
+            "warnings": [],
+            "results": [],
+        }
+    config_path = state_root / "config" / "path-governance.json"
+    return check_paths(
+        actor_profile=actor_profile,
+        changed_paths=planned_paths,
+        config_path=config_path,
+        strict_unowned=bool(args.strict_unowned_paths or governance.get("strict_unowned")),
+        check_mode="planned",
+        session_id=task["metadata"]["id"],
+        reason=f"run-workflow-task:{args.workflow}",
+    )
+
+
+def _actor_profile_from_task(task: dict) -> str | None:
+    assignee = ((task.get("spec") or {}).get("assignee") or {})
+    if assignee.get("kind") in {"hermes_profile", "profile"}:
+        return assignee.get("id")
+    return None
 
 
 def _send_feishu_payload(payload: dict, profile: str, dry_run: bool, state_root: Path) -> dict:
@@ -570,6 +618,14 @@ def _write_workflow_evidence(state_root: Path, task_id: str, workflow: str, comp
         "stderr": completed.stderr,
         "captured_at": datetime.now(timezone.utc).isoformat(),
     }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return str(path)
+
+
+def _write_path_governance_evidence(state_root: Path, task_id: str, payload: dict) -> str:
+    evidence_dir = state_root / "evidence" / task_id
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    path = evidence_dir / f"path-governance-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return str(path)
 

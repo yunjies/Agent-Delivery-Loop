@@ -80,3 +80,21 @@ For manual Hermes/Codex sessions, this guard is advisory plus procedural. The ag
 For framework-level paths, use `framework-maintainer` as the actor profile. For business-owned paths, use the business profile only when the registry explicitly allows it.
 
 If the actual changed path set differs from the planned set, run an observed check before reporting completion.
+
+## Workflow Execution Boundary
+
+For ADL-managed workflow tasks, declare planned writes on the task before execution:
+
+```json
+{
+  "path_governance": {
+    "actor_profile": "framework-maintainer",
+    "planned_paths": [
+      "/opt/data/profiles/home-media/config.yaml"
+    ],
+    "strict_unowned": false
+  }
+}
+```
+
+`run-workflow-task` performs this planned check before it launches the workflow. A failed path governance check must stop execution.

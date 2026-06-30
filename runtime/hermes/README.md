@@ -53,6 +53,7 @@ Supported prefixes:
 - `supervisor-tick` only reviews submitted attempts.
 - `notify-send-outbox` requires a configured lark-cli profile.
 - `run-workflow-task` rejects tasks requesting high-risk system permissions.
+- `run-workflow-task` also runs a path-governance preflight when `spec.path_governance.planned_paths` or `--changed-path` is provided.
 - Home Media active skills are intentionally limited to `home-media*`; broad restored skills are archived outside the active skill root.
 - Framework-level model/profile/skill/workflow/cron changes should pass `path_governance_check.py` as `framework-maintainer`.
 - Manual sessions should run `path_governance_check.py --check-mode planned` before file writes and `--check-mode observed` after file writes when governed paths are touched.

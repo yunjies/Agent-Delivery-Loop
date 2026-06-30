@@ -151,12 +151,30 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py no
 
 Only run workflow tasks after the task is approved and does not request high-risk permissions.
 
+If a task may write governed paths, include `spec.path_governance` before execution:
+
+```json
+{
+  "path_governance": {
+    "actor_profile": "framework-maintainer",
+    "planned_paths": [
+      "/opt/data/workflows/specs/example.workflow.yaml"
+    ],
+    "strict_unowned": false
+  }
+}
+```
+
+The workflow adapter runs a planned path-governance preflight before launching the workflow. If the preflight fails, the workflow is not executed.
+
 ```bash
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py run-workflow-task \
   --task-id <task-id> \
   --workflow <workflow-name> \
   --mode production \
-  --max-ticks 8
+  --max-ticks 8 \
+  --actor-profile framework-maintainer \
+  --changed-path /opt/data/workflows/specs/example.workflow.yaml
 ```
 
 The adapter writes workflow evidence under:

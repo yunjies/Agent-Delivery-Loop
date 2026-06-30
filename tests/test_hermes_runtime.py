@@ -11,7 +11,7 @@ RUNTIME = ROOT / "runtime" / "hermes" / "adl_runtime.py"
 sys.path.insert(0, str(ROOT / "runtime" / "hermes"))
 
 from adl_feishu_intake_listener import build_intake_command
-from adl_runtime import _extract_message_id, _topic_root_text
+from adl_runtime import _extract_message_id, _topic_root_text, _workflow_path_preflight
 
 
 class HermesRuntimeTests(unittest.TestCase):
@@ -163,6 +163,66 @@ class HermesRuntimeTests(unittest.TestCase):
         )
         self.assertIsNotNone(command)
         self.assertIn("feishu-ingest", command)
+
+    def test_workflow_path_preflight_allows_owner_profile(self):
+        self.write_path_governance_config()
+        task = self.task_with_path_governance("framework-maintainer", ["/opt/data/workflows/specs/example.workflow.yaml"])
+        args = type("Args", (), {"actor_profile": None, "changed_path": [], "strict_unowned_paths": False, "workflow": "example"})()
+        payload = _workflow_path_preflight(task, args, Path(self.tempdir))
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["actor_profile"], "framework-maintainer")
+        self.assertEqual(payload["check_mode"], "planned")
+        self.assertEqual(payload["session_id"], "task-path-test")
+
+    def test_run_workflow_task_blocks_path_governance_violation_before_execution(self):
+        self.write_path_governance_config()
+        task = self.task_with_path_governance("home-media", ["/opt/data/workflows/specs/example.workflow.yaml"])
+        tasks = Path(self.tempdir) / "tasks"
+        tasks.mkdir(parents=True)
+        (tasks / "task-path-test.json").write_text(json.dumps(task, ensure_ascii=False, indent=2), encoding="utf-8")
+        result = self.run_runtime("run-workflow-task", "--task-id", "task-path-test", "--workflow", "example", check=False)
+        self.assertEqual(result.returncode, 3)
+        payload = json.loads(result.stdout)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"], "path governance preflight failed")
+        self.assertEqual(payload["preflight"]["violations"][0]["owner_profile"], "framework-maintainer")
+
+    def write_path_governance_config(self):
+        config_dir = Path(self.tempdir) / "config"
+        config_dir.mkdir(parents=True)
+        (config_dir / "path-governance.json").write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "rules": [
+                        {
+                            "id": "workflow-specs",
+                            "owner_profile": "framework-maintainer",
+                            "allowed_profiles": ["framework-maintainer"],
+                            "match": ["/opt/data/workflows/specs/**"],
+                            "decision": "block",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    def task_with_path_governance(self, actor_profile, planned_paths):
+        return {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Task",
+            "metadata": {"id": "task-path-test", "goal_id": "goal-test", "created_at": "2026-06-30T00:00:00+00:00"},
+            "spec": {
+                "task_type": "workflow_run",
+                "objective": "Run path governance test workflow",
+                "assignee": {"kind": "hermes_profile", "id": actor_profile},
+                "permissions": {"external_send": False},
+                "path_governance": {"actor_profile": actor_profile, "planned_paths": planned_paths},
+                "acceptance": {"evidence_required": True},
+                "state": {"status": "pending", "latest_attempt_id": None},
+            },
+        }
 
 
 if __name__ == "__main__":
