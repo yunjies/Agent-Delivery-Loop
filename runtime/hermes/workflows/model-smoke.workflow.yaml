@@ -1,0 +1,62 @@
+apiVersion: hermes.workflow/v2
+kind: Workflow
+metadata:
+  id: model-smoke
+  version: 2.0.0-model-maintainer
+  labels:
+    profile: model-maintainer
+    domain: model-governance
+    purpose: low-cost-model-smoke
+schedule:
+  mode: manual
+  enabled: false
+runtime:
+  max_concurrency: 1
+model_policy:
+  rule: "Run only when requested or during rollout; it performs a small live model call."
+nodes:
+  - id: run-model-smoke
+    type: script
+    depends_on: []
+    executor:
+      kind: script
+      command: /opt/data/profiles/model-maintainer/scripts/model_maintainer_smoke.py
+      args: []
+      timeout_seconds: 240
+    permissions:
+      docs_live_write: false
+      feishu_send: false
+      cron_mutation: false
+      workflow_mutation: false
+      rename_delete_move: false
+    outputs:
+      schema_ref: "#/schemas/smoke_result"
+
+  - id: publish-model-smoke
+    type: publisher
+    depends_on:
+      - run-model-smoke
+    executor:
+      kind: lark_publisher
+      mode: production
+      name: model-maintainer-smoke
+      lark_profile: model-maintainer
+      target:
+        type: feishu
+        chat_id: oc_ae34ba7aa73f0b988872a4b578e1028e
+    inputs:
+      content:
+        file: /opt/data/workflows/outputs/model-smoke/model-smoke-report.md
+    permissions:
+      docs_live_write: false
+      feishu_send: true
+      cron_mutation: false
+      workflow_mutation: false
+      rename_delete_move: false
+    outputs:
+      schema_ref: "#/schemas/delivery"
+schemas:
+  smoke_result:
+    type: object
+  delivery:
+    type: object

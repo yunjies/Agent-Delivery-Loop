@@ -51,6 +51,9 @@ class HermesRuntimeTests(unittest.TestCase):
             sorted(payload["registered"]),
             ["lark-operator", "mind-palace", "model-maintainer", "ops-auditor"],
         )
+        model_expert = json.loads((Path(self.tempdir) / "experts" / "model-maintainer.json").read_text(encoding="utf-8"))
+        self.assertEqual(model_expert["spec"]["invocation"]["adapter"], "hermes_workflow")
+        self.assertEqual(model_expert["spec"]["invocation"]["profile"], "model-maintainer")
         second = json.loads(self.run_runtime("register-default-experts").stdout)
         self.assertEqual(sorted(second["skipped"]), ["lark-operator", "mind-palace", "model-maintainer", "ops-auditor"])
 

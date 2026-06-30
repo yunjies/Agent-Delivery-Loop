@@ -1,0 +1,62 @@
+apiVersion: hermes.workflow/v2
+kind: Workflow
+metadata:
+  id: model-registry-check
+  version: 2.0.0-model-maintainer
+  labels:
+    profile: model-maintainer
+    domain: model-governance
+    purpose: report-only-model-registry
+schedule:
+  mode: manual
+  enabled: false
+runtime:
+  max_concurrency: 1
+model_policy:
+  rule: "Deterministic script collects model registry state; model-maintainer bot publishes."
+nodes:
+  - id: collect-model-registry
+    type: script
+    depends_on: []
+    executor:
+      kind: script
+      command: /opt/data/profiles/model-maintainer/scripts/model_maintainer_registry_check.py
+      args: []
+      timeout_seconds: 180
+    permissions:
+      docs_live_write: false
+      feishu_send: false
+      cron_mutation: false
+      workflow_mutation: false
+      rename_delete_move: false
+    outputs:
+      schema_ref: "#/schemas/collect_result"
+
+  - id: publish-model-registry
+    type: publisher
+    depends_on:
+      - collect-model-registry
+    executor:
+      kind: lark_publisher
+      mode: production
+      name: model-maintainer-registry-check
+      lark_profile: model-maintainer
+      target:
+        type: feishu
+        chat_id: oc_ae34ba7aa73f0b988872a4b578e1028e
+    inputs:
+      content:
+        file: /opt/data/workflows/outputs/model-registry-check/model-registry-report.md
+    permissions:
+      docs_live_write: false
+      feishu_send: true
+      cron_mutation: false
+      workflow_mutation: false
+      rename_delete_move: false
+    outputs:
+      schema_ref: "#/schemas/delivery"
+schemas:
+  collect_result:
+    type: object
+  delivery:
+    type: object

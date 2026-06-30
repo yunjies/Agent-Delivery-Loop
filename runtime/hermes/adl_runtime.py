@@ -463,7 +463,7 @@ def _default_experts() -> list[dict]:
                     {"id": "model_registry_check", "description": "Check model registry state", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
                     {"id": "model_smoke", "description": "Run model smoke checks", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
                 ],
-                "invocation": {"adapter": "proposal_only", "profile": "model-maintainer"},
+                "invocation": {"adapter": "hermes_workflow", "profile": "model-maintainer", "workflows": ["model-registry-check", "model-smoke"]},
             },
         },
     ]
