@@ -69,14 +69,21 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_feishu_intake
 
 ## Notifications
 
+Default notification target config:
+
+```text
+/opt/data/agent-delivery-loop/config/notification-targets.json
+```
+
+When a target has `thread_per_goal: true`, the first notification for a goal creates a root message in the configured chat, and later notifications for the same goal are sent as `--reply-in-thread` replies to that root message.
+
 Create a notification payload:
 
 ```bash
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py notify-enqueue \
   --goal-id <goal-id> \
   --message-type status_report \
-  --content "<short status>" \
-  --chat-id <oc_chat_id>
+  --content "<short status>"
 ```
 
 Dry-run send:

@@ -185,6 +185,9 @@ def _resolve_notification_target(state_root: Path, args) -> dict:
         target["user_id"] = configured["user_id"]
     else:
         raise ValueError(f"notification target {args.target_name} has no chat_id or user_id")
+    for key in ["label", "thread_per_goal", "topic_root_prefix"]:
+        if key in configured:
+            target[key] = configured[key]
     return target
 
 
@@ -200,7 +203,7 @@ def _cmd_notify_send_outbox(args, state_root: Path) -> int:
     results = []
     for path in paths:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        result = _send_feishu_payload(payload, profile=args.profile, dry_run=args.dry_run)
+        result = _send_feishu_payload(payload, profile=args.profile, dry_run=args.dry_run, state_root=state_root)
         results.append({"path": str(path), **result})
         if result["ok"] and not args.dry_run:
             shutil.move(str(path), str(sent / path.name))
@@ -252,8 +255,10 @@ def _cmd_run_workflow_task(args, state_root: Path) -> int:
     return 0 if completed.returncode == 0 else 1
 
 
-def _send_feishu_payload(payload: dict, profile: str, dry_run: bool) -> dict:
+def _send_feishu_payload(payload: dict, profile: str, dry_run: bool, state_root: Path) -> dict:
     target = payload.get("target") or {}
+    if target.get("thread_per_goal"):
+        return _send_feishu_threaded_payload(payload, profile=profile, dry_run=dry_run, state_root=state_root)
     cmd = ["/opt/data/bin/lark-cli", "--profile", profile, "im", "+messages-send", "--as", "bot"]
     if target.get("chat_id"):
         cmd.extend(["--chat-id", target["chat_id"]])
@@ -274,6 +279,80 @@ def _send_feishu_payload(payload: dict, profile: str, dry_run: bool) -> dict:
     }
 
 
+def _send_feishu_threaded_payload(payload: dict, profile: str, dry_run: bool, state_root: Path) -> dict:
+    goal_id = payload.get("goal_id")
+    if not goal_id:
+        return {"ok": False, "error": "missing goal_id for threaded notification"}
+    target = payload.get("target") or {}
+    binding = _load_conversation_binding(state_root, goal_id)
+    text = _notification_text(payload)
+    if binding and binding.get("root_message_id"):
+        cmd = [
+            "/opt/data/bin/lark-cli",
+            "--profile",
+            profile,
+            "im",
+            "+messages-reply",
+            "--as",
+            "bot",
+            "--message-id",
+            binding["root_message_id"],
+            "--text",
+            text,
+            "--reply-in-thread",
+        ]
+        mode = "thread_reply"
+    else:
+        if not target.get("chat_id"):
+            return {"ok": False, "error": "thread_per_goal target requires chat_id"}
+        root_text = _topic_root_text(payload)
+        cmd = [
+            "/opt/data/bin/lark-cli",
+            "--profile",
+            profile,
+            "im",
+            "+messages-send",
+            "--as",
+            "bot",
+            "--chat-id",
+            target["chat_id"],
+            "--text",
+            root_text,
+        ]
+        mode = "topic_root"
+    if dry_run:
+        cmd.append("--dry-run")
+    completed = subprocess.run(cmd, text=True, capture_output=True, timeout=60)
+    result = {
+        "ok": completed.returncode == 0,
+        "returncode": completed.returncode,
+        "stdout_tail": (completed.stdout or "")[-1000:],
+        "stderr_tail": (completed.stderr or "")[-1000:],
+        "dry_run": dry_run,
+        "mode": mode,
+    }
+    if completed.returncode == 0 and mode == "topic_root" and not dry_run:
+        message_id = _extract_message_id(completed.stdout)
+        if message_id:
+            _save_conversation_binding(
+                state_root,
+                goal_id,
+                {
+                    "goal_id": goal_id,
+                    "chat_id": target.get("chat_id"),
+                    "root_message_id": message_id,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "source": "feishu_thread_per_goal",
+                },
+            )
+            result["root_message_id"] = message_id
+        else:
+            result["ok"] = False
+            result["error"] = "send succeeded but message_id was not found"
+    return result
+
+
 def _notification_text(payload: dict) -> str:
     lines = [
         f"[ADL] {payload.get('message_type')}",
@@ -283,6 +362,52 @@ def _notification_text(payload: dict) -> str:
         lines.append(f"task: {payload.get('task_id')}")
     lines.append(str(payload.get("content") or ""))
     return "\n".join(lines)
+
+
+def _topic_root_text(payload: dict) -> str:
+    target = payload.get("target") or {}
+    prefix = target.get("topic_root_prefix") or "[ADL Topic]"
+    lines = [
+        f"{prefix} {payload.get('message_type')}",
+        f"goal: {payload.get('goal_id')}",
+    ]
+    if payload.get("task_id"):
+        lines.append(f"task: {payload.get('task_id')}")
+    lines.append(str(payload.get("content") or ""))
+    lines.append("")
+    lines.append("All follow-up logs for this loop will stay in this thread.")
+    return "\n".join(lines)
+
+
+def _conversation_binding_path(state_root: Path, goal_id: str) -> Path:
+    return state_root / "conversations" / "goals" / f"{goal_id}.json"
+
+
+def _load_conversation_binding(state_root: Path, goal_id: str) -> dict | None:
+    path = _conversation_binding_path(state_root, goal_id)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _save_conversation_binding(state_root: Path, goal_id: str, binding: dict) -> None:
+    path = _conversation_binding_path(state_root, goal_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(binding, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _extract_message_id(stdout: str) -> str | None:
+    try:
+        data = json.loads(stdout)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(data, dict):
+        nested = data.get("data")
+        if isinstance(nested, dict) and nested.get("message_id"):
+            return nested["message_id"]
+        if data.get("message_id"):
+            return data["message_id"]
+    return None
 
 
 def _default_experts() -> list[dict]:

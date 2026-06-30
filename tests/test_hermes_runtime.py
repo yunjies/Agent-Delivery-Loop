@@ -11,6 +11,7 @@ RUNTIME = ROOT / "runtime" / "hermes" / "adl_runtime.py"
 sys.path.insert(0, str(ROOT / "runtime" / "hermes"))
 
 from adl_feishu_intake_listener import build_intake_command
+from adl_runtime import _extract_message_id, _topic_root_text
 
 
 class HermesRuntimeTests(unittest.TestCase):
@@ -83,7 +84,7 @@ class HermesRuntimeTests(unittest.TestCase):
         config_dir = Path(self.tempdir) / "config"
         config_dir.mkdir(parents=True)
         (config_dir / "notification-targets.json").write_text(
-            json.dumps({"default": {"chat_id": "oc_configured"}}),
+            json.dumps({"default": {"chat_id": "oc_configured", "thread_per_goal": True, "topic_root_prefix": "[ADL Topic]"}}),
             encoding="utf-8",
         )
         ingest = json.loads(
@@ -107,6 +108,25 @@ class HermesRuntimeTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         outbox = json.loads(Path(payload["path"]).read_text(encoding="utf-8"))
         self.assertEqual(outbox["target"]["chat_id"], "oc_configured")
+        self.assertTrue(outbox["target"]["thread_per_goal"])
+        self.assertEqual(outbox["target"]["topic_root_prefix"], "[ADL Topic]")
+
+    def test_extract_message_id_from_lark_cli_response(self):
+        stdout = json.dumps({"ok": True, "data": {"message_id": "om_test"}})
+        self.assertEqual(_extract_message_id(stdout), "om_test")
+
+    def test_topic_root_text_marks_follow_up_thread(self):
+        text = _topic_root_text(
+            {
+                "goal_id": "goal-test",
+                "message_type": "status_report",
+                "content": "Loop accepted.",
+                "target": {"topic_root_prefix": "[ADL Topic]"},
+            }
+        )
+        self.assertIn("[ADL Topic] status_report", text)
+        self.assertIn("goal: goal-test", text)
+        self.assertIn("All follow-up logs", text)
 
     def test_feishu_listener_builds_intake_command_for_keyword_message(self):
         command = build_intake_command(
