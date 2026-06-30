@@ -40,6 +40,7 @@ Known expert ids:
 - `ops-auditor`: runtime health, cron, skill health, system checks.
 - `home-media`: home media wishlist, pipeline survey, missing media, and M-Team nurture report tasks.
 - `model-maintainer`: model registry and model smoke checks.
+- `framework-maintainer`: framework-level model, profile, skill, workflow, cron, gateway, and path governance changes.
 - `lark-operator`: Feishu message and notification operations.
 
 Omit `--preferred-expert` when routing is unclear.

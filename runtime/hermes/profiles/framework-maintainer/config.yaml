@@ -29,10 +29,10 @@ memory:
 framework_maintainer:
   layer: L9
   profile: framework-maintainer
-  status: active-skeleton
-  report_only: true
+  status: guarded-operations
+  report_only: false
   path_governance_enabled: true
-  mutation_enabled: false
+  mutation_enabled: guarded
   governed_domains:
     - model_registry
     - profile_registry

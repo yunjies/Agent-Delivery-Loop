@@ -19,6 +19,53 @@ Governed domains:
 - gateway service boundaries
 - ADL framework runtime config
 
+## Operation Plan
+
+Use an operation plan before changing model, profile, skill, workflow, cron, gateway, or ADL runtime files.
+
+```bash
+python3 /opt/data/profiles/framework-maintainer/scripts/framework_operation_plan.py \
+  --operation workflow:update \
+  --title "Update media wishlist workflow" \
+  --intent "Route media wishlist through the current home-media workflow contract." \
+  --target-workflow media-wishlist \
+  --session-id <session-or-goal-id> \
+  --write-report
+```
+
+The plan derives expected paths, runs path governance as `framework-maintainer`, and writes activation checks. Do not make framework changes without a passing plan.
+
+## Governance Health
+
+Run this after framework changes and from scheduled health checks:
+
+```bash
+python3 /opt/data/profiles/framework-maintainer/scripts/framework_governance_health.py
+```
+
+Workflow:
+
+```bash
+/opt/hermes/.venv/bin/python /opt/data/scripts/workflow_runtime.py run \
+  --workflow framework-governance-health \
+  --trigger manual:framework-governance-health \
+  --mode production \
+  --max-ticks 8
+```
+
+Cron wrapper:
+
+```bash
+python3 /opt/data/scripts/framework_governance_health_cron.py
+```
+
+Live cron job:
+
+```text
+framework-governance-health-daily
+35 8 * * *
+```
+
 ## Path Governance Check
 
 Use this check before or after changing framework-level paths.
@@ -26,7 +73,7 @@ Use this check before or after changing framework-level paths.
 Manual session rule:
 
 1. Before writing files, list the planned changed paths and run this check with `--check-mode planned`.
-2. If the check fails, stop and route the work to the owning profile or request approval to switch actor profile.
+2. If the check identifies another owner, reroute the task to that owner before creating work for the wrong profile.
 3. After writing files, run the same check on the actually changed paths with `--check-mode observed`.
 4. Keep the report as evidence when the task is part of an ADL loop.
 
@@ -50,7 +97,7 @@ python3 /opt/data/profiles/framework-maintainer/scripts/path_governance_check.py
   --check-mode planned
 ```
 
-The check exits non-zero when a blocked path is owned by another profile.
+The check exits non-zero when the actor profile does not own a governed path. In ADL routing, the supervisor should use the returned `reroute_profile` instead of continuing with the wrong actor.
 
 Reports are written under:
 
@@ -97,4 +144,4 @@ For ADL-managed workflow tasks, declare planned writes on the task before execut
 }
 ```
 
-`run-workflow-task` performs this planned check before it launches the workflow. A failed path governance check must stop execution.
+`run-workflow-task` performs this planned check before it launches the workflow. A failed path governance check stops execution because task creation should already have rerouted to the correct owner.

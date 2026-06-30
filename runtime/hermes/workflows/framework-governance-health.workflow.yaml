@@ -1,0 +1,39 @@
+apiVersion: hermes.workflow/v2
+kind: Workflow
+metadata:
+  id: framework-governance-health
+  version: 1.0.0-framework-maintainer
+  labels:
+    profile: framework-maintainer
+    domain: agent-delivery-loop
+    purpose: framework-governance-health
+schedule:
+  mode: manual
+  enabled: false
+runtime:
+  max_concurrency: 1
+model_policy:
+  rule: "Deterministic script checks framework-maintainer governance surfaces and path ownership rules."
+nodes:
+  - id: collect-framework-governance-health
+    type: script
+    depends_on: []
+    executor:
+      kind: script
+      command: python3
+      args:
+        - /opt/data/profiles/framework-maintainer/scripts/framework_governance_health.py
+      timeout_seconds: 120
+    permissions:
+      docs_live_write: false
+      feishu_send: false
+      cron_mutation: false
+      workflow_mutation: false
+      profile_mutation: false
+      skill_mutation: false
+      secret_mutation: false
+    outputs:
+      schema_ref: "#/schemas/collect_result"
+schemas:
+  collect_result:
+    type: object
