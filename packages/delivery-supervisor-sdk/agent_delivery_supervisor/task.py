@@ -13,6 +13,7 @@ def create_task(
     acceptance,
     budget=None,
     required_capabilities=None,
+    path_governance=None,
 ):
     goal_id = goal["metadata"]["id"]
     task_id = _stable_id("task", goal_id, task_type, objective, assignee.get("id", ""))
@@ -30,6 +31,8 @@ def create_task(
     }
     if required_capabilities:
         spec["required_capabilities"] = list(required_capabilities)
+    if path_governance:
+        spec["path_governance"] = dict(path_governance)
     return {
         "apiVersion": "agent.delivery.loop/v0",
         "kind": "Task",

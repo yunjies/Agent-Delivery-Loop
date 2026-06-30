@@ -14,7 +14,7 @@ from .decision import create_loop_decision
 from .task import create_task
 
 
-def propose_next_task(goal, experts, task_spec):
+def propose_next_task(goal, experts, task_spec, path_governance_evaluator=None):
     """Return (task, decision, ranked_experts) for the next supervised step."""
 
     budget = goal.get("spec", {}).get("budget") or {}
@@ -70,6 +70,27 @@ def propose_next_task(goal, experts, task_spec):
         )
         return None, decision, ranked
 
+    path_preflight = _evaluate_path_governance(task_spec, selected, path_governance_evaluator)
+    if path_preflight and not path_preflight.get("ok"):
+        decision = create_loop_decision(
+            goal,
+            action="request_approval",
+            reason=f"Path governance preflight failed before creating a task for expert {selected}.",
+            required_approval={
+                "approval_type": "path_governance",
+                "expert_id": selected,
+                "path_governance": path_preflight,
+            },
+            budget_assessment={
+                "within_budget": True,
+            },
+            risk_assessment={
+                "high_risk": True,
+                "gate_required": True,
+            },
+        )
+        return None, decision, ranked
+
     task = create_task(
         goal,
         task_type=task_spec["task_type"],
@@ -79,6 +100,7 @@ def propose_next_task(goal, experts, task_spec):
         acceptance=task_spec.get("acceptance") or {"evidence_required": True},
         budget=task_spec.get("budget") or {},
         required_capabilities=task_spec.get("required_capabilities") or [],
+        path_governance=task_spec.get("path_governance"),
     )
     decision = create_loop_decision(
         goal,
@@ -94,6 +116,25 @@ def propose_next_task(goal, experts, task_spec):
         },
     )
     return task, decision, ranked
+
+
+def _evaluate_path_governance(task_spec, selected_expert, evaluator):
+    path_governance = task_spec.get("path_governance") or {}
+    planned_paths = path_governance.get("planned_paths") or path_governance.get("changed_paths") or []
+    if not planned_paths:
+        return None
+    if evaluator is None:
+        return {
+            "ok": False,
+            "error": "path governance evaluator is required before task creation",
+            "expert_id": selected_expert,
+            "actor_profile": path_governance.get("actor_profile") or selected_expert,
+            "changed_path_count": len(planned_paths),
+            "violations": [{"message": "missing path governance evaluator"}],
+            "warnings": [],
+            "results": [],
+        }
+    return evaluator(task_spec=task_spec, selected_expert=selected_expert)
 
 
 def review_attempt(goal, task, attempt):

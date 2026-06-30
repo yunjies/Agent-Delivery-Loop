@@ -160,6 +160,96 @@ class SdkTests(unittest.TestCase):
         self.assertEqual(decision["spec"]["action"], "request_approval")
         self.assertEqual(ranked[0]["expert_id"], "archiver")
 
+    def test_delivery_supervisor_checks_path_governance_before_task_creation(self):
+        demand = create_demand(
+            title="Update workflow",
+            request="Update workflow spec",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        expert = {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
+            "metadata": {"id": "home-media", "title": "Home Media"},
+            "spec": {
+                "expert_kind": "hermes_profile",
+                "capabilities": [{"id": "workflow_edit", "description": "Edit workflow", "priority": 100, "default_owner": True}],
+                "invocation": {"adapter": "hermes_workflow", "profile": "home-media"},
+            },
+        }
+
+        def evaluator(task_spec, selected_expert):
+            return {
+                "ok": False,
+                "actor_profile": task_spec["path_governance"]["actor_profile"],
+                "violations": [{"path": "/opt/data/workflows/specs/media.workflow.yaml", "owner_profile": "framework-maintainer"}],
+                "warnings": [],
+                "results": [],
+            }
+
+        task, decision, ranked = propose_next_task(
+            goal,
+            [expert],
+            {
+                "task_type": "workflow_run",
+                "objective": "Update workflow spec",
+                "required_capabilities": ["workflow_edit"],
+                "permissions": {"workflow_mutation": False},
+                "path_governance": {
+                    "actor_profile": "home-media",
+                    "planned_paths": ["/opt/data/workflows/specs/media.workflow.yaml"],
+                },
+                "acceptance": {"evidence_required": True},
+            },
+            path_governance_evaluator=evaluator,
+        )
+        self.assertIsNone(task)
+        self.assertEqual(decision["spec"]["action"], "request_approval")
+        self.assertEqual(decision["spec"]["required_approval"]["approval_type"], "path_governance")
+        self.assertEqual(decision["spec"]["required_approval"]["path_governance"]["violations"][0]["owner_profile"], "framework-maintainer")
+        self.assertEqual(ranked[0]["expert_id"], "home-media")
+
+    def test_delivery_supervisor_keeps_path_governance_on_created_task(self):
+        demand = create_demand(
+            title="Update workflow",
+            request="Update workflow spec",
+            requester={"kind": "human", "id": "requester-example"},
+        )
+        goal = create_goal_from_demand(demand)
+        expert = {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
+            "metadata": {"id": "framework-maintainer", "title": "Framework Maintainer"},
+            "spec": {
+                "expert_kind": "hermes_profile",
+                "capabilities": [{"id": "workflow_edit", "description": "Edit workflow", "priority": 100, "default_owner": True}],
+                "invocation": {"adapter": "hermes_profile", "profile": "framework-maintainer"},
+            },
+        }
+
+        def evaluator(task_spec, selected_expert):
+            return {"ok": True, "actor_profile": "framework-maintainer", "violations": [], "warnings": [], "results": []}
+
+        task, decision, _ = propose_next_task(
+            goal,
+            [expert],
+            {
+                "task_type": "workflow_run",
+                "objective": "Update workflow spec",
+                "required_capabilities": ["workflow_edit"],
+                "permissions": {"workflow_mutation": False},
+                "path_governance": {
+                    "actor_profile": "framework-maintainer",
+                    "planned_paths": ["/opt/data/workflows/specs/media.workflow.yaml"],
+                },
+                "acceptance": {"evidence_required": True},
+            },
+            path_governance_evaluator=evaluator,
+        )
+        self.assertIsNotNone(task)
+        self.assertEqual(decision["spec"]["action"], "create_task")
+        self.assertEqual(task["spec"]["path_governance"]["actor_profile"], "framework-maintainer")
+
     def test_delivery_supervisor_accepts_successful_attempt_with_evidence(self):
         demand = create_demand(
             title="Maintain wiki health",
