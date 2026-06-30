@@ -55,8 +55,9 @@ def collect() -> dict:
 
 def _read_config(path: Path) -> dict:
     profile = "default" if path == Path("/opt/data/config.yaml") else path.parent.name
+    text = path.read_text(encoding="utf-8", errors="replace")
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) if yaml else {}
+        data = yaml.safe_load(text) if yaml else _fallback_config_parse(text)
     except Exception as exc:
         return {"path": str(path), "profile": profile, "error": str(exc)}
     model = data.get("model") or {}
@@ -91,6 +92,34 @@ def _workflow_model_refs() -> list[dict]:
         if providers or models:
             refs.append({"workflow": path.name, "providers": providers, "models": models})
     return refs
+
+
+def _fallback_config_parse(text: str) -> dict:
+    model = {
+        "provider": _regex_value(text, r"(?m)^model:\n(?:  .*\n)*?  provider:\s*(.+)$"),
+        "default": _regex_value(text, r"(?m)^model:\n(?:  .*\n)*?  default:\s*(.+)$"),
+        "openai_runtime": _regex_value(text, r"(?m)^model:\n(?:  .*\n)*?  openai_runtime:\s*(.+)$"),
+    }
+    providers: dict[str, dict] = {}
+    provider_ids = re.findall(r"(?m)^  ([A-Za-z0-9_.-]+):\n    base_url:", text)
+    for provider_id in provider_ids:
+        block_match = re.search(rf"(?ms)^  {re.escape(provider_id)}:\n(.*?)(?=^  [A-Za-z0-9_.-]+:\n|\Z)", text)
+        block = block_match.group(1) if block_match else ""
+        models = re.findall(r"(?m)^    -\s*(.+)$", block)
+        providers[provider_id] = {
+            "base_url": _regex_value(block, r"(?m)^    base_url:\s*(.+)$"),
+            "default_model": _regex_value(block, r"(?m)^    default_model:\s*(.+)$"),
+            "key_env": _regex_value(block, r"(?m)^    key_env:\s*(.+)$"),
+            "models": models,
+        }
+    return {"model": model, "providers": providers}
+
+
+def _regex_value(text: str, pattern: str) -> str | None:
+    match = re.search(pattern, text)
+    if not match:
+        return None
+    return match.group(1).strip().strip("'\"")
 
 
 def _analytics_models() -> dict:
