@@ -204,9 +204,10 @@ class SdkTests(unittest.TestCase):
             path_governance_evaluator=evaluator,
         )
         self.assertIsNone(task)
-        self.assertEqual(decision["spec"]["action"], "request_approval")
-        self.assertEqual(decision["spec"]["required_approval"]["approval_type"], "path_governance")
-        self.assertEqual(decision["spec"]["required_approval"]["path_governance"]["violations"][0]["owner_profile"], "framework-maintainer")
+        self.assertEqual(decision["spec"]["action"], "mark_blocked")
+        self.assertIsNone(decision["spec"]["required_approval"])
+        self.assertIn("reset this goal", decision["spec"]["next_prompt"])
+        self.assertEqual(decision["spec"]["review_feedback"]["path_governance"]["violations"][0]["owner_profile"], "framework-maintainer")
         self.assertEqual(ranked[0]["expert_id"], "home-media")
 
     def test_delivery_supervisor_keeps_path_governance_on_created_task(self):

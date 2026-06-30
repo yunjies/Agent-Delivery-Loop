@@ -32,7 +32,7 @@ class PathGovernanceTests(unittest.TestCase):
                             "owner_profile": "mind-palace",
                             "allowed_profiles": ["mind-palace"],
                             "match": ["/mnt/user/Docs/wiki/**"],
-                            "decision": "warn",
+                            "decision": "block",
                         },
                     ],
                 }
@@ -63,10 +63,15 @@ class PathGovernanceTests(unittest.TestCase):
         self.assertFalse(payload["ok"])
         self.assertEqual(payload["violations"][0]["owner_profile"], "framework-maintainer")
 
-    def test_warning_rule_does_not_fail(self):
-        payload = check_paths("framework-maintainer", ["/mnt/user/Docs/wiki/index.md"], config_path=self.config)
+    def test_wiki_owner_can_touch_wiki_path(self):
+        payload = check_paths("mind-palace", ["/mnt/user/Docs/wiki/index.md"], config_path=self.config)
         self.assertTrue(payload["ok"])
-        self.assertEqual(payload["warnings"][0]["owner_profile"], "mind-palace")
+        self.assertEqual(payload["violations"], [])
+
+    def test_non_wiki_actor_is_blocked_on_wiki_path(self):
+        payload = check_paths("framework-maintainer", ["/mnt/user/Docs/wiki/index.md"], config_path=self.config)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["violations"][0]["owner_profile"], "mind-palace")
 
     def test_strict_unowned_path_fails(self):
         payload = check_paths("framework-maintainer", ["/tmp/unowned.txt"], config_path=self.config, strict_unowned=True)

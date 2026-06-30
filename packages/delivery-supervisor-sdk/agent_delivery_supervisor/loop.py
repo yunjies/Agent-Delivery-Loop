@@ -72,15 +72,11 @@ def propose_next_task(goal, experts, task_spec, path_governance_evaluator=None):
 
     path_preflight = _evaluate_path_governance(task_spec, selected, path_governance_evaluator)
     if path_preflight and not path_preflight.get("ok"):
+        next_prompt = _path_governance_clarify_prompt(task_spec, selected, path_preflight)
         decision = create_loop_decision(
             goal,
-            action="request_approval",
-            reason=f"Path governance preflight failed before creating a task for expert {selected}.",
-            required_approval={
-                "approval_type": "path_governance",
-                "expert_id": selected,
-                "path_governance": path_preflight,
-            },
+            action="mark_blocked",
+            reason=f"Path governance preflight failed before creating a task for expert {selected}; clarify and reset the goal before routing.",
             budget_assessment={
                 "within_budget": True,
             },
@@ -88,6 +84,11 @@ def propose_next_task(goal, experts, task_spec, path_governance_evaluator=None):
                 "high_risk": True,
                 "gate_required": True,
             },
+            review_feedback={
+                "expert_id": selected,
+                "path_governance": path_preflight,
+            },
+            next_prompt=next_prompt,
         )
         return None, decision, ranked
 
@@ -135,6 +136,21 @@ def _evaluate_path_governance(task_spec, selected_expert, evaluator):
             "results": [],
         }
     return evaluator(task_spec=task_spec, selected_expert=selected_expert)
+
+
+def _path_governance_clarify_prompt(task_spec, selected_expert, path_preflight):
+    violations = path_preflight.get("violations") or []
+    owners = sorted({item.get("owner_profile") for item in violations if item.get("owner_profile")})
+    paths = [item.get("path") for item in violations if item.get("path")]
+    owner_text = ", ".join(owners) if owners else "the owning profile"
+    path_text = ", ".join(paths[:5]) if paths else "the governed paths"
+    return (
+        f"Clarify and reset this goal before creating a task. The proposed task for expert {selected_expert} "
+        f"would touch {path_text}, which is owned by {owner_text}. "
+        "Route the work through the owning profile interface, adjust the planned paths, or split the goal so each "
+        "write is performed by the correct profile. Preserve the original objective and include the corrected "
+        "`path_governance.actor_profile` and `planned_paths`."
+    )
 
 
 def review_attempt(goal, task, attempt):

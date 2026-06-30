@@ -6,7 +6,7 @@ The Delivery Supervisor SDK supervises delivery. It does not execute business wo
 
 Core helpers:
 
-- `propose_next_task`: select a registered expert and create a task proposal, or request approval for high-risk permissions or failed path-governance preflight.
+- `propose_next_task`: select a registered expert and create a task proposal, request approval for high-risk permissions, or block failed path-governance preflight before task creation.
 - `review_attempt`: deterministically inspect an expert attempt and return an updated task plus a supervisor decision.
 
 `review_attempt` can:
@@ -17,4 +17,4 @@ Core helpers:
 - mark blocked attempts as blocked;
 - stop when the goal budget threshold is exhausted.
 
-`propose_next_task` checks path governance before task creation when the task spec includes `path_governance.planned_paths` and a `path_governance_evaluator` is provided. If the check fails, no task is created and the decision requests approval.
+`propose_next_task` checks path governance before task creation when the task spec includes `path_governance.planned_paths` and a `path_governance_evaluator` is provided. If the check fails, no task is created and the decision is `mark_blocked` with a clarification prompt for resetting the goal.

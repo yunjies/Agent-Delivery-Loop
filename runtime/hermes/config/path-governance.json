@@ -39,7 +39,7 @@
     },
     {
       "id": "hermes-workflows",
-      "description": "Workflow specs, workflow scripts, and workflow orchestration files are governed by the framework maintainer.",
+      "description": "Workflow specs, workflow scripts, and workflow orchestration files are governed by the framework maintainer. Business profiles must request changes through the framework-maintainer interface so checks run before activation.",
       "owner_profile": "framework-maintainer",
       "allowed_profiles": ["framework-maintainer"],
       "match": [
@@ -61,13 +61,13 @@
     },
     {
       "id": "mind-palace-wiki",
-      "description": "Mind Palace wiki content is owned by the mind-palace profile.",
+      "description": "Mind Palace wiki content is read-only for general profiles. Only wiki-owner profiles may edit it.",
       "owner_profile": "mind-palace",
       "allowed_profiles": ["mind-palace"],
       "match": [
         "/mnt/user/Docs/wiki/**"
       ],
-      "decision": "warn"
+      "decision": "block"
     }
   ]
 }
