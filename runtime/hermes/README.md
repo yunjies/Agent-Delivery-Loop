@@ -14,6 +14,7 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py su
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py notify-enqueue --goal-id <goal-id> --message-type status_report --content "..." --chat-id oc_xxx
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py notify-send-outbox --profile delivery-supervisor --dry-run
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py run-workflow-task --task-id <task-id> --workflow mind-palace-lint
+python3 /opt/data/profiles/framework-maintainer/scripts/path_governance_check.py --actor-profile framework-maintainer --changed-path /opt/data/workflows/specs/example.workflow.yaml
 ```
 
 ## Experts
@@ -24,6 +25,7 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py ru
 - `ops-auditor`
 - `home-media`
 - `lark-operator`
+- `framework-maintainer`
 - `model-maintainer`
 
 ## Feishu Intake
@@ -52,3 +54,4 @@ Supported prefixes:
 - `notify-send-outbox` requires a configured lark-cli profile.
 - `run-workflow-task` rejects tasks requesting high-risk system permissions.
 - Home Media active skills are intentionally limited to `home-media*`; broad restored skills are archived outside the active skill root.
+- Framework-level model/profile/skill/workflow/cron changes should pass `path_governance_check.py` as `framework-maintainer`.

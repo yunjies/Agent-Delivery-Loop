@@ -1,0 +1,43 @@
+model:
+  provider: openai
+  default: gpt-5
+  openai_runtime: codex_app_server
+toolsets:
+  - hermes-cli
+agent:
+  max_turns: 80
+  gateway_timeout: 1200
+  disabled_toolsets: []
+  system_prompt: >-
+    You are Framework Maintainer, Qian Duoduo's Hermes platform governance
+    profile. Govern model config, profile creation, skill format and exposure,
+    workflow orchestration, cron binding, adapter changes, and gateway boundary
+    rules. Prefer deterministic scripts and explicit registries. Do not perform
+    business implementation. Do not mutate runtime files unless the request has
+    passed an explicit ADL approval gate and the path governance check confirms
+    this profile owns the target path.
+skills:
+  external_dirs:
+    - /opt/data/profiles/framework-maintainer/skills
+  template_vars: true
+  inline_shell: false
+  write_approval: true
+memory:
+  memory_enabled: true
+  user_profile_enabled: false
+  write_approval: true
+framework_maintainer:
+  layer: L9
+  profile: framework-maintainer
+  status: active-skeleton
+  report_only: true
+  path_governance_enabled: true
+  mutation_enabled: false
+  governed_domains:
+    - model_registry
+    - profile_registry
+    - skill_registry
+    - workflow_specs
+    - workflow_orchestration
+    - cron_bindings
+    - gateway_services

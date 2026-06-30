@@ -25,7 +25,22 @@ This registers:
 - `ops-auditor`
 - `home-media`
 - `lark-operator`
+- `framework-maintainer`
 - `model-maintainer`
+
+## Framework Governance
+
+Framework-level model, profile, skill, workflow, cron, gateway, or ADL config changes should be delegated to `framework-maintainer`.
+
+Path ownership guard:
+
+```bash
+python3 /opt/data/profiles/framework-maintainer/scripts/path_governance_check.py \
+  --actor-profile <profile> \
+  --changed-path <absolute-path>
+```
+
+Use `framework-maintainer` as the actor for approved framework capability changes. Other actors should fail or warn when touching owned paths.
 
 ## Registry Health
 

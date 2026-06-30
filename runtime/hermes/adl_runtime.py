@@ -484,6 +484,22 @@ def _default_experts() -> list[dict]:
         {
             "apiVersion": "agent.delivery.loop/v0",
             "kind": "Expert",
+            "metadata": {"id": "framework-maintainer", "title": "Framework Maintainer"},
+            "spec": {
+                "expert_kind": "hermes_profile",
+                "capabilities": [
+                    {"id": "path_governance", "description": "Check path ownership before framework-level mutations", "priority": 95, "cost_class": "low", "reliability": "high", "default_owner": True},
+                    {"id": "profile_governance", "description": "Govern Hermes profile creation and registration", "priority": 90, "cost_class": "medium", "reliability": "high", "default_owner": True},
+                    {"id": "skill_governance", "description": "Govern Hermes skill format, ownership, and exposure", "priority": 90, "cost_class": "medium", "reliability": "high", "default_owner": True},
+                    {"id": "workflow_governance", "description": "Govern workflow specs, orchestration, and cron bindings", "priority": 90, "cost_class": "medium", "reliability": "high", "default_owner": True},
+                    {"id": "model_governance", "description": "Govern model registry and routing changes", "priority": 85, "cost_class": "medium", "reliability": "high", "default_owner": True},
+                ],
+                "invocation": {"adapter": "hermes_profile", "profile": "framework-maintainer", "skills": ["framework-governance"]},
+            },
+        },
+        {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
             "metadata": {"id": "model-maintainer", "title": "Model Maintainer"},
             "spec": {
                 "expert_kind": "hermes_profile",

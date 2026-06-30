@@ -17,6 +17,7 @@ EXPECTED_EXPERTS = {
     "mind-palace",
     "ops-auditor",
     "home-media",
+    "framework-maintainer",
     "model-maintainer",
     "lark-operator",
 }

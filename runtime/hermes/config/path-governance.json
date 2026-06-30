@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "default": {
+    "unowned_path_policy": "allow"
+  },
+  "rules": [
+    {
+      "id": "framework-runtime",
+      "description": "ADL framework runtime, registry, and notification config are maintained by the framework maintainer.",
+      "owner_profile": "framework-maintainer",
+      "allowed_profiles": ["framework-maintainer"],
+      "match": [
+        "/opt/data/agent-delivery-loop/framework/**",
+        "/opt/data/agent-delivery-loop/config/**",
+        "/opt/data/agent-delivery-loop/experts/**"
+      ],
+      "decision": "block"
+    },
+    {
+      "id": "hermes-profiles",
+      "description": "Hermes profile creation, config changes, and profile-local skill exposure are governed by the framework maintainer.",
+      "owner_profile": "framework-maintainer",
+      "allowed_profiles": ["framework-maintainer"],
+      "match": [
+        "/opt/data/config.yaml",
+        "/opt/data/profiles/**"
+      ],
+      "decision": "block"
+    },
+    {
+      "id": "hermes-skills",
+      "description": "Global Hermes skill creation and format changes are governed by the framework maintainer.",
+      "owner_profile": "framework-maintainer",
+      "allowed_profiles": ["framework-maintainer"],
+      "match": [
+        "/opt/data/.agents/skills/**"
+      ],
+      "decision": "block"
+    },
+    {
+      "id": "hermes-workflows",
+      "description": "Workflow specs, workflow scripts, and workflow orchestration files are governed by the framework maintainer.",
+      "owner_profile": "framework-maintainer",
+      "allowed_profiles": ["framework-maintainer"],
+      "match": [
+        "/opt/data/workflows/specs/**",
+        "/opt/data/workflows/scripts/**",
+        "/opt/data/scripts/workflow_runtime.py"
+      ],
+      "decision": "block"
+    },
+    {
+      "id": "hermes-cron",
+      "description": "Cron binding and scheduled automation changes are governed by the framework maintainer.",
+      "owner_profile": "framework-maintainer",
+      "allowed_profiles": ["framework-maintainer"],
+      "match": [
+        "/opt/data/cron/**"
+      ],
+      "decision": "block"
+    },
+    {
+      "id": "mind-palace-wiki",
+      "description": "Mind Palace wiki content is owned by the mind-palace profile.",
+      "owner_profile": "mind-palace",
+      "allowed_profiles": ["mind-palace"],
+      "match": [
+        "/mnt/user/Docs/wiki/**"
+      ],
+      "decision": "warn"
+    }
+  ]
+}
