@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 RUNTIME = Path(__file__).resolve().with_name("adl_runtime.py")
-LOOP_PREFIXES = ("#loop", "#wiki", "#ops", "#model", "#adl")
+LOOP_PREFIXES = ("#loop", "#wiki", "#ops", "#model", "#media", "#home", "#mteam", "#adl")
 
 
 def main(argv=None) -> int:

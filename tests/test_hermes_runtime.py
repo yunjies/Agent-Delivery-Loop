@@ -49,13 +49,17 @@ class HermesRuntimeTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(
             sorted(payload["registered"]),
-            ["lark-operator", "mind-palace", "model-maintainer", "ops-auditor"],
+            ["home-media", "lark-operator", "mind-palace", "model-maintainer", "ops-auditor"],
         )
+        home_media = json.loads((Path(self.tempdir) / "experts" / "home-media.json").read_text(encoding="utf-8"))
+        self.assertEqual(home_media["spec"]["invocation"]["adapter"], "hermes_workflow")
+        self.assertEqual(home_media["spec"]["invocation"]["profile"], "home-media")
+        self.assertIn("media-pipeline", home_media["spec"]["invocation"]["workflows"])
         model_expert = json.loads((Path(self.tempdir) / "experts" / "model-maintainer.json").read_text(encoding="utf-8"))
         self.assertEqual(model_expert["spec"]["invocation"]["adapter"], "hermes_workflow")
         self.assertEqual(model_expert["spec"]["invocation"]["profile"], "model-maintainer")
         second = json.loads(self.run_runtime("register-default-experts").stdout)
-        self.assertEqual(sorted(second["skipped"]), ["lark-operator", "mind-palace", "model-maintainer", "ops-auditor"])
+        self.assertEqual(sorted(second["skipped"]), ["home-media", "lark-operator", "mind-palace", "model-maintainer", "ops-auditor"])
 
     def test_notify_enqueue_writes_outbox(self):
         ingest = json.loads(
@@ -148,6 +152,14 @@ class HermesRuntimeTests(unittest.TestCase):
     def test_feishu_listener_ignores_plain_message(self):
         command = build_intake_command({"content": "hello", "sender_id": "ou_test"}, state_root=self.tempdir)
         self.assertIsNone(command)
+
+    def test_feishu_listener_accepts_home_media_prefix(self):
+        command = build_intake_command(
+            {"content": "#media Check missing media and report only, finish today.", "sender_id": "ou_test"},
+            state_root=self.tempdir,
+        )
+        self.assertIsNotNone(command)
+        self.assertIn("feishu-ingest", command)
 
 
 if __name__ == "__main__":

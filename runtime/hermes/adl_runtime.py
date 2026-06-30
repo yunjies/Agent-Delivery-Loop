@@ -443,6 +443,34 @@ def _default_experts() -> list[dict]:
         {
             "apiVersion": "agent.delivery.loop/v0",
             "kind": "Expert",
+            "metadata": {"id": "home-media", "title": "Home Media"},
+            "spec": {
+                "expert_kind": "hermes_profile",
+                "capabilities": [
+                    {"id": "media_wishlist", "description": "Collect and report home media wishlist state", "priority": 70, "cost_class": "low", "reliability": "medium", "default_owner": True},
+                    {"id": "media_pipeline", "description": "Survey home media pipeline state without triggering mutations", "priority": 75, "cost_class": "medium", "reliability": "medium", "default_owner": True},
+                    {"id": "media_missing_watchdog", "description": "Detect missing media and report only", "priority": 75, "cost_class": "low", "reliability": "medium", "default_owner": True},
+                    {"id": "mteam_nurture_scan", "description": "Scan M-Team nurture state", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
+                    {"id": "mteam_nurture_check", "description": "Check M-Team nurture eligibility and state", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
+                    {"id": "mteam_nurture_report", "description": "Produce M-Team nurture report", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
+                ],
+                "invocation": {
+                    "adapter": "hermes_workflow",
+                    "profile": "home-media",
+                    "workflows": [
+                        "media-wishlist",
+                        "media-pipeline",
+                        "media-missing-watchdog",
+                        "mteam-nurture-scan",
+                        "mteam-nurture-check",
+                        "mteam-nurture-report",
+                    ],
+                },
+            },
+        },
+        {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
             "metadata": {"id": "lark-operator", "title": "Lark Operator"},
             "spec": {
                 "expert_kind": "feishu_operator",
@@ -471,7 +499,7 @@ def _default_experts() -> list[dict]:
 
 def _strip_known_prefix(text: str) -> str:
     stripped = text.strip()
-    for prefix in ["#loop", "#wiki", "#ops", "#model", "#adl"]:
+    for prefix in ["#loop", "#wiki", "#ops", "#model", "#media", "#home", "#mteam", "#adl"]:
         if stripped.lower().startswith(prefix):
             return stripped[len(prefix):].strip()
     return stripped
@@ -485,6 +513,8 @@ def _expert_from_prefix(text: str) -> str | None:
         return "ops-auditor"
     if lowered.startswith("#model"):
         return "model-maintainer"
+    if lowered.startswith("#media") or lowered.startswith("#home") or lowered.startswith("#mteam"):
+        return "home-media"
     return None
 
 
