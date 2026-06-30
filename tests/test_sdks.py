@@ -182,7 +182,14 @@ class SdkTests(unittest.TestCase):
             return {
                 "ok": False,
                 "actor_profile": task_spec["path_governance"]["actor_profile"],
-                "violations": [{"path": "/opt/data/workflows/specs/media.workflow.yaml", "owner_profile": "framework-maintainer"}],
+                "violations": [
+                    {
+                        "path": "/opt/data/workflows/specs/media.workflow.yaml",
+                        "owner_profile": "framework-maintainer",
+                        "delegate_profile": "framework-maintainer",
+                        "delegate_action": "delegate_task",
+                    }
+                ],
                 "warnings": [],
                 "results": [],
             }
@@ -207,6 +214,8 @@ class SdkTests(unittest.TestCase):
         self.assertEqual(decision["spec"]["action"], "mark_blocked")
         self.assertIsNone(decision["spec"]["required_approval"])
         self.assertIn("reset this goal", decision["spec"]["next_prompt"])
+        self.assertIn("delegate_task", decision["spec"]["next_prompt"])
+        self.assertIn("framework-maintainer", decision["spec"]["next_prompt"])
         self.assertEqual(decision["spec"]["review_feedback"]["path_governance"]["violations"][0]["owner_profile"], "framework-maintainer")
         self.assertEqual(ranked[0]["expert_id"], "home-media")
 

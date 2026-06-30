@@ -61,9 +61,11 @@
     },
     {
       "id": "mind-palace-wiki",
-      "description": "Mind Palace wiki content is read-only for general profiles. Only wiki-owner profiles may edit it.",
+      "description": "Mind Palace wiki content is directly editable only by wiki-owner profiles. Other profiles should delegate wiki writes to mind-palace instead of writing directly.",
       "owner_profile": "mind-palace",
       "allowed_profiles": ["mind-palace"],
+      "delegate_profile": "mind-palace",
+      "delegate_action": "delegate_task",
       "match": [
         "/mnt/user/Docs/wiki/**"
       ],

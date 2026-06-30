@@ -17,4 +17,4 @@ Core helpers:
 - mark blocked attempts as blocked;
 - stop when the goal budget threshold is exhausted.
 
-`propose_next_task` checks path governance before task creation when the task spec includes `path_governance.planned_paths` and a `path_governance_evaluator` is provided. If the check fails, no task is created and the decision is `mark_blocked` with a clarification prompt for resetting the goal.
+`propose_next_task` checks path governance before task creation when the task spec includes `path_governance.planned_paths` and a `path_governance_evaluator` is provided. If the check fails, no task is created and the decision is `mark_blocked` with a clarification prompt for resetting the goal and delegating the write to the owning profile.

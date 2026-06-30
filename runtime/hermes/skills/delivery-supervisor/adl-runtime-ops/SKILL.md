@@ -42,7 +42,7 @@ python3 /opt/data/profiles/framework-maintainer/scripts/path_governance_check.py
   --session-id <session-or-goal-id>
 ```
 
-Use `framework-maintainer` as the actor for approved framework capability changes. Other actors should fail or warn when touching owned paths.
+Use `framework-maintainer` as the actor for approved framework capability changes. Other actors should not write owned paths directly; they should delegate the write request to the owning profile shown by the path governance result.
 
 After manual writes, rerun the guard with `--check-mode observed` for the actual changed paths before accepting the task.
 
@@ -154,7 +154,7 @@ Only run workflow tasks after the task is approved and does not request high-ris
 Preferred order for governed paths:
 
 1. Run path governance during task proposal before creating the task.
-2. If path governance fails, block the proposal and clarify/reset the goal instead of requesting approval.
+2. If path governance fails, block the proposal and clarify/reset the goal so the write is delegated to the owning profile.
 3. Keep the accepted `spec.path_governance` on the task.
 4. Let `run-workflow-task` repeat the preflight as the last guard before execution.
 

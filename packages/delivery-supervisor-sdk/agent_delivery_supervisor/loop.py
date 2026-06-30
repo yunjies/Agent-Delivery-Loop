@@ -141,14 +141,17 @@ def _evaluate_path_governance(task_spec, selected_expert, evaluator):
 def _path_governance_clarify_prompt(task_spec, selected_expert, path_preflight):
     violations = path_preflight.get("violations") or []
     owners = sorted({item.get("owner_profile") for item in violations if item.get("owner_profile")})
+    delegates = sorted({item.get("delegate_profile") for item in violations if item.get("delegate_profile")})
     paths = [item.get("path") for item in violations if item.get("path")]
     owner_text = ", ".join(owners) if owners else "the owning profile"
+    delegate_text = ", ".join(delegates) if delegates else owner_text
     path_text = ", ".join(paths[:5]) if paths else "the governed paths"
     return (
         f"Clarify and reset this goal before creating a task. The proposed task for expert {selected_expert} "
         f"would touch {path_text}, which is owned by {owner_text}. "
-        "Route the work through the owning profile interface, adjust the planned paths, or split the goal so each "
-        "write is performed by the correct profile. Preserve the original objective and include the corrected "
+        f"Do not write the path directly from {selected_expert}; delegate the write request to {delegate_text} "
+        "through delegate_task, adjust the planned paths, or split the goal so each write is performed by the correct profile. "
+        "Preserve the original objective and include the corrected "
         "`path_governance.actor_profile` and `planned_paths`."
     )
 

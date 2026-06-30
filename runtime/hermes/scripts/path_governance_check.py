@@ -100,8 +100,10 @@ def check_one_path(actor_profile: str, changed_path: str, config: dict, strict_u
         "rule_id": rule.get("id"),
         "owner_profile": rule.get("owner_profile"),
         "allowed_profiles": allowed_profiles,
+        "delegate_profile": rule.get("delegate_profile") or rule.get("owner_profile"),
+        "delegate_action": rule.get("delegate_action") or "delegate_task",
         "actor_profile": actor_profile,
-        "message": f"path is owned by {rule.get('owner_profile')}",
+        "message": f"path is owned by {rule.get('owner_profile')}; delegate via {rule.get('delegate_profile') or rule.get('owner_profile')}",
     }
 
 
@@ -156,7 +158,9 @@ def render_markdown(payload: dict) -> str:
     ]
     if payload["violations"]:
         for item in payload["violations"]:
-            lines.append(f"- `{item['path']}`: {item.get('message', 'violation')} (rule `{item.get('rule_id')}`)")
+            delegate = item.get("delegate_profile")
+            suffix = f"; delegate_to=`{delegate}`" if delegate else ""
+            lines.append(f"- `{item['path']}`: {item.get('message', 'violation')} (rule `{item.get('rule_id')}`{suffix})")
     else:
         lines.append("- none")
     lines.extend(["", "## Warnings", ""])
