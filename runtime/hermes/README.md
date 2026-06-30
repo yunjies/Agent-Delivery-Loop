@@ -16,9 +16,39 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py no
 python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_runtime.py run-workflow-task --task-id <task-id> --workflow mind-palace-lint
 ```
 
+## Experts
+
+`register-default-experts --overwrite` registers:
+
+- `mind-palace`
+- `ops-auditor`
+- `home-media`
+- `lark-operator`
+- `model-maintainer`
+
+## Feishu Intake
+
+Production Feishu intake is cron polling:
+
+```bash
+python3 /opt/data/profiles/delivery-supervisor/scripts/adl_feishu_intake_listener_poll.py
+```
+
+Supported prefixes:
+
+- `#loop`
+- `#wiki`
+- `#ops`
+- `#model`
+- `#media`
+- `#home`
+- `#mteam`
+- `#adl`
+
 ## Safety
 
 - `feishu-ingest` only creates intake and optional Demand/Goal.
 - `supervisor-tick` only reviews submitted attempts.
 - `notify-send-outbox` requires a configured lark-cli profile.
 - `run-workflow-task` rejects tasks requesting high-risk system permissions.
+- Home Media active skills are intentionally limited to `home-media*`; broad restored skills are archived outside the active skill root.

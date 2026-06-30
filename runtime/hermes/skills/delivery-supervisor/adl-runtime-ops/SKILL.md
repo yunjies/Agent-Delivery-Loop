@@ -23,6 +23,7 @@ This registers:
 
 - `mind-palace`
 - `ops-auditor`
+- `home-media`
 - `lark-operator`
 - `model-maintainer`
 
@@ -48,6 +49,9 @@ The listener consumes `im.message.receive_v1` and routes messages starting with:
 - `#wiki`
 - `#ops`
 - `#model`
+- `#media`
+- `#home`
+- `#mteam`
 - `#adl`
 
 Smoke without waiting for real messages:
@@ -63,9 +67,10 @@ python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_feishu_intake
 Production listener command:
 
 ```bash
-python3 /opt/data/agent-delivery-loop/framework/runtime/hermes/adl_feishu_intake_listener.py \
-  --profile delivery-supervisor
+python3 /opt/data/profiles/delivery-supervisor/scripts/adl_feishu_intake_listener_poll.py
 ```
+
+The production path is cron polling, not an unbounded daemon. The poller runs every five minutes and listens for 90 seconds, which stays below the Hermes cron script timeout.
 
 ## Notifications
 
