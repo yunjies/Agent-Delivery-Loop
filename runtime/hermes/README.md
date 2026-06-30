@@ -27,7 +27,6 @@ python3 /opt/data/profiles/framework-maintainer/scripts/framework_operation_plan
 - `home-media`
 - `lark-operator`
 - `framework-maintainer`
-- `model-maintainer`
 
 ## Feishu Intake
 

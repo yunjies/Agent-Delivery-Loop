@@ -11,7 +11,7 @@ RUNTIME = ROOT / "runtime" / "hermes" / "adl_runtime.py"
 sys.path.insert(0, str(ROOT / "runtime" / "hermes"))
 
 from adl_feishu_intake_listener import build_intake_command
-from adl_runtime import _extract_message_id, _topic_root_text, _workflow_path_preflight
+from adl_runtime import _expert_from_prefix, _extract_message_id, _topic_root_text, _workflow_path_preflight
 
 
 class HermesRuntimeTests(unittest.TestCase):
@@ -49,20 +49,19 @@ class HermesRuntimeTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(
             sorted(payload["registered"]),
-            ["framework-maintainer", "home-media", "lark-operator", "mind-palace", "model-maintainer", "ops-auditor"],
+            ["framework-maintainer", "home-media", "lark-operator", "mind-palace", "ops-auditor"],
         )
         home_media = json.loads((Path(self.tempdir) / "experts" / "home-media.json").read_text(encoding="utf-8"))
         self.assertEqual(home_media["spec"]["invocation"]["adapter"], "hermes_workflow")
         self.assertEqual(home_media["spec"]["invocation"]["profile"], "home-media")
         self.assertIn("media-pipeline", home_media["spec"]["invocation"]["workflows"])
-        model_expert = json.loads((Path(self.tempdir) / "experts" / "model-maintainer.json").read_text(encoding="utf-8"))
-        self.assertEqual(model_expert["spec"]["invocation"]["adapter"], "hermes_workflow")
-        self.assertEqual(model_expert["spec"]["invocation"]["profile"], "model-maintainer")
         framework_expert = json.loads((Path(self.tempdir) / "experts" / "framework-maintainer.json").read_text(encoding="utf-8"))
         self.assertEqual(framework_expert["spec"]["invocation"]["adapter"], "hermes_profile")
         self.assertEqual(framework_expert["spec"]["invocation"]["profile"], "framework-maintainer")
+        self.assertIn("model_registry_check", [item["id"] for item in framework_expert["spec"]["capabilities"]])
+        self.assertIn("model-registry-check", framework_expert["spec"]["invocation"]["workflows"])
         second = json.loads(self.run_runtime("register-default-experts").stdout)
-        self.assertEqual(sorted(second["skipped"]), ["framework-maintainer", "home-media", "lark-operator", "mind-palace", "model-maintainer", "ops-auditor"])
+        self.assertEqual(sorted(second["skipped"]), ["framework-maintainer", "home-media", "lark-operator", "mind-palace", "ops-auditor"])
 
     def test_notify_enqueue_writes_outbox(self):
         ingest = json.loads(
@@ -163,6 +162,9 @@ class HermesRuntimeTests(unittest.TestCase):
         )
         self.assertIsNotNone(command)
         self.assertIn("feishu-ingest", command)
+
+    def test_model_prefix_routes_to_framework_maintainer(self):
+        self.assertEqual(_expert_from_prefix("#model Check model registry and report."), "framework-maintainer")
 
     def test_workflow_path_preflight_allows_owner_profile(self):
         self.write_path_governance_config()

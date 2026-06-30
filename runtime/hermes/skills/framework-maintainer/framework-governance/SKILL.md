@@ -19,6 +19,32 @@ Governed domains:
 - gateway service boundaries
 - ADL framework runtime config
 
+## Model Governance
+
+Model registry checks and model smoke checks are framework-level operations.
+They write local evidence under `/opt/data/workflows/outputs/model-registry-check/` and `/opt/data/workflows/outputs/model-smoke/`.
+
+```bash
+python3 /opt/data/profiles/framework-maintainer/scripts/framework_model_registry_check.py
+python3 /opt/data/profiles/framework-maintainer/scripts/framework_model_smoke.py
+```
+
+Workflows:
+
+```bash
+/opt/hermes/.venv/bin/python /opt/data/scripts/workflow_runtime.py run \
+  --workflow model-registry-check \
+  --trigger manual:framework-maintainer-model-registry \
+  --mode production \
+  --max-ticks 8
+
+/opt/hermes/.venv/bin/python /opt/data/scripts/workflow_runtime.py run \
+  --workflow model-smoke \
+  --trigger manual:framework-maintainer-model-smoke \
+  --mode production \
+  --max-ticks 8
+```
+
 ## Operation Plan
 
 Use an operation plan before changing model, profile, skill, workflow, cron, gateway, or ADL runtime files.

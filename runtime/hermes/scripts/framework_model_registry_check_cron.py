@@ -8,11 +8,11 @@ def main() -> int:
     return subprocess.call(
         [
             "python3",
-            "/opt/data/profiles/model-maintainer/scripts/model_maintainer_run_workflow.py",
+            "/opt/data/profiles/framework-maintainer/scripts/framework_model_run_workflow.py",
             "--workflow",
             "model-registry-check",
             "--trigger",
-            "cron:model-maintainer-registry-daily",
+            "cron:framework-maintainer-model-registry-daily",
             "--mode",
             "production",
             "--max-ticks",

@@ -2,9 +2,9 @@ apiVersion: hermes.workflow/v2
 kind: Workflow
 metadata:
   id: model-smoke
-  version: 2.0.0-model-maintainer
+  version: 1.0.0-framework-maintainer
   labels:
-    profile: model-maintainer
+    profile: framework-maintainer
     domain: model-governance
     purpose: low-cost-model-smoke
 schedule:
@@ -22,7 +22,7 @@ nodes:
       kind: script
       command: python3
       args:
-        - /opt/data/profiles/model-maintainer/scripts/model_maintainer_smoke.py
+        - /opt/data/profiles/framework-maintainer/scripts/framework_model_smoke.py
       timeout_seconds: 240
     permissions:
       docs_live_write: false
@@ -32,32 +32,6 @@ nodes:
       rename_delete_move: false
     outputs:
       schema_ref: "#/schemas/smoke_result"
-
-  - id: publish-model-smoke
-    type: publisher
-    depends_on:
-      - run-model-smoke
-    executor:
-      kind: lark_publisher
-      mode: production
-      name: model-maintainer-smoke
-      lark_profile: model-maintainer
-      target:
-        type: feishu
-        chat_id: oc_ae34ba7aa73f0b988872a4b578e1028e
-    inputs:
-      content:
-        file: /opt/data/workflows/outputs/model-smoke/model-smoke-report.md
-    permissions:
-      docs_live_write: false
-      feishu_send: true
-      cron_mutation: false
-      workflow_mutation: false
-      rename_delete_move: false
-    outputs:
-      schema_ref: "#/schemas/delivery"
 schemas:
   smoke_result:
-    type: object
-  delivery:
     type: object

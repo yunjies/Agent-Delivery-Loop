@@ -18,7 +18,6 @@ EXPECTED_EXPERTS = {
     "ops-auditor",
     "home-media",
     "framework-maintainer",
-    "model-maintainer",
     "lark-operator",
 }
 NON_EXPERT_PROFILES = {"default", "delivery-supervisor"}

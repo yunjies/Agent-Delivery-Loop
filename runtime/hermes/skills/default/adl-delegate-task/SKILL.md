@@ -39,8 +39,7 @@ Known expert ids:
 - `mind-palace`: wiki, Obsidian, index, survey, lint.
 - `ops-auditor`: runtime health, cron, skill health, system checks.
 - `home-media`: home media wishlist, pipeline survey, missing media, and M-Team nurture report tasks.
-- `model-maintainer`: model registry and model smoke checks.
-- `framework-maintainer`: framework-level model, profile, skill, workflow, cron, gateway, and path governance changes.
+- `framework-maintainer`: framework-level model, profile, skill, workflow, cron, gateway, path governance, model registry, and model smoke checks.
 - `lark-operator`: Feishu message and notification operations.
 
 Omit `--preferred-expert` when routing is unclear.
@@ -52,7 +51,7 @@ When the task comes from Feishu, these prefixes are routed by the intake poller:
 - `#wiki` -> `mind-palace`
 - `#ops` -> `ops-auditor`
 - `#media`, `#home`, `#mteam` -> `home-media`
-- `#model` -> `model-maintainer`
+- `#model` -> `framework-maintainer`
 - `#loop` or `#adl` -> no forced expert
 
 ## Check Status

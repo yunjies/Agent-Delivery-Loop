@@ -26,7 +26,6 @@ This registers:
 - `home-media`
 - `lark-operator`
 - `framework-maintainer`
-- `model-maintainer`
 
 ## Framework Governance
 

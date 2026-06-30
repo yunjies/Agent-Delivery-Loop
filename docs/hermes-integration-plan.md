@@ -58,7 +58,7 @@ Existing and future Hermes profiles can register as Experts.
 Initial candidates:
 - `mind-palace`: wiki and knowledge maintenance;
 - `ops-auditor`: runtime health and report-only audits;
-- `model-maintainer`: model registry and smoke tests;
+- `framework-maintainer`: framework governance, including model registry and smoke tests;
 - `lark-operator`: Feishu operations.
 
 The profile name is not the protocol role. It is an expert implementation behind the Hermes adapter.

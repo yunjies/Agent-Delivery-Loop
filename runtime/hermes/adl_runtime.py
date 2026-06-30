@@ -541,21 +541,15 @@ def _default_experts() -> list[dict]:
                     {"id": "skill_governance", "description": "Govern Hermes skill format, ownership, and exposure", "priority": 90, "cost_class": "medium", "reliability": "high", "default_owner": True},
                     {"id": "workflow_governance", "description": "Govern workflow specs, orchestration, and cron bindings", "priority": 90, "cost_class": "medium", "reliability": "high", "default_owner": True},
                     {"id": "model_governance", "description": "Govern model registry and routing changes", "priority": 85, "cost_class": "medium", "reliability": "high", "default_owner": True},
+                    {"id": "model_registry_check", "description": "Check model registry state", "priority": 80, "cost_class": "low", "reliability": "high", "default_owner": True},
+                    {"id": "model_smoke", "description": "Run model smoke checks", "priority": 75, "cost_class": "low", "reliability": "medium", "default_owner": True},
                 ],
-                "invocation": {"adapter": "hermes_profile", "profile": "framework-maintainer", "skills": ["framework-governance"]},
-            },
-        },
-        {
-            "apiVersion": "agent.delivery.loop/v0",
-            "kind": "Expert",
-            "metadata": {"id": "model-maintainer", "title": "Model Maintainer"},
-            "spec": {
-                "expert_kind": "hermes_profile",
-                "capabilities": [
-                    {"id": "model_registry_check", "description": "Check model registry state", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
-                    {"id": "model_smoke", "description": "Run model smoke checks", "priority": 65, "cost_class": "low", "reliability": "medium", "default_owner": True},
-                ],
-                "invocation": {"adapter": "hermes_workflow", "profile": "model-maintainer", "workflows": ["model-registry-check", "model-smoke"]},
+                "invocation": {
+                    "adapter": "hermes_profile",
+                    "profile": "framework-maintainer",
+                    "skills": ["framework-governance"],
+                    "workflows": ["framework-governance-health", "model-registry-check", "model-smoke"],
+                },
             },
         },
     ]
@@ -576,7 +570,7 @@ def _expert_from_prefix(text: str) -> str | None:
     if lowered.startswith("#ops"):
         return "ops-auditor"
     if lowered.startswith("#model"):
-        return "model-maintainer"
+        return "framework-maintainer"
     if lowered.startswith("#media") or lowered.startswith("#home") or lowered.startswith("#mteam"):
         return "home-media"
     return None
