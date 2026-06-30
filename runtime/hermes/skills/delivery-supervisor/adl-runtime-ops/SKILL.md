@@ -32,15 +32,19 @@ This registers:
 
 Framework-level model, profile, skill, workflow, cron, gateway, or ADL config changes should be delegated to `framework-maintainer`.
 
-Path ownership guard:
+Path ownership guard. Use it for cron/workflow execution and for manual sessions before file writes:
 
 ```bash
 python3 /opt/data/profiles/framework-maintainer/scripts/path_governance_check.py \
   --actor-profile <profile> \
-  --changed-path <absolute-path>
+  --changed-path <absolute-path> \
+  --check-mode planned \
+  --session-id <session-or-goal-id>
 ```
 
 Use `framework-maintainer` as the actor for approved framework capability changes. Other actors should fail or warn when touching owned paths.
+
+After manual writes, rerun the guard with `--check-mode observed` for the actual changed paths before accepting the task.
 
 ## Registry Health
 

@@ -48,9 +48,15 @@ class PathGovernanceTests(unittest.TestCase):
             "framework-maintainer",
             ["/opt/data/profiles/home-media/config.yaml", "/opt/data/workflows/specs/media.workflow.yaml"],
             config_path=self.config,
+            check_mode="planned",
+            session_id="session-test",
+            reason="unit test",
         )
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["violations"], [])
+        self.assertEqual(payload["check_mode"], "planned")
+        self.assertEqual(payload["session_id"], "session-test")
+        self.assertEqual(payload["reason"], "unit test")
 
     def test_other_actor_is_blocked_on_framework_path(self):
         payload = check_paths("home-media", ["/opt/data/workflows/specs/media.workflow.yaml"], config_path=self.config)

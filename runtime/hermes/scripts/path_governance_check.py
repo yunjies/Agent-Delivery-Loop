@@ -20,6 +20,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--actor-profile", required=True)
     parser.add_argument("--changed-path", action="append", default=[])
     parser.add_argument("--changed-paths-file")
+    parser.add_argument("--check-mode", default="planned", choices=["planned", "observed", "cron", "health"])
+    parser.add_argument("--session-id")
+    parser.add_argument("--reason")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--strict-unowned", action="store_true")
     parser.add_argument("--write-report", action="store_true")
@@ -34,6 +37,9 @@ def main(argv: list[str] | None = None) -> int:
         changed_paths=changed_paths,
         config_path=Path(args.config),
         strict_unowned=args.strict_unowned,
+        check_mode=args.check_mode,
+        session_id=args.session_id,
+        reason=args.reason,
     )
     if args.write_report:
         write_reports(payload, Path(args.out_dir))
@@ -41,7 +47,15 @@ def main(argv: list[str] | None = None) -> int:
     return 0 if payload["ok"] else 2
 
 
-def check_paths(actor_profile: str, changed_paths: list[str], config_path: Path = DEFAULT_CONFIG, strict_unowned: bool = False) -> dict:
+def check_paths(
+    actor_profile: str,
+    changed_paths: list[str],
+    config_path: Path = DEFAULT_CONFIG,
+    strict_unowned: bool = False,
+    check_mode: str = "planned",
+    session_id: str | None = None,
+    reason: str | None = None,
+) -> dict:
     config = load_config(config_path)
     results = [check_one_path(actor_profile, changed_path, config, strict_unowned) for changed_path in changed_paths]
     violations = [item for item in results if item["status"] == "violation"]
@@ -50,6 +64,9 @@ def check_paths(actor_profile: str, changed_paths: list[str], config_path: Path 
         "ok": not violations,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "actor_profile": actor_profile,
+        "check_mode": check_mode,
+        "session_id": session_id,
+        "reason": reason,
         "config_path": str(config_path if config_path.exists() else BUNDLED_CONFIG),
         "changed_path_count": len(changed_paths),
         "violations": violations,
@@ -128,6 +145,9 @@ def render_markdown(payload: dict) -> str:
         "",
         f"- generated_at: `{payload['generated_at']}`",
         f"- actor_profile: `{payload['actor_profile']}`",
+        f"- check_mode: `{payload['check_mode']}`",
+        f"- session_id: `{payload['session_id'] or 'none'}`",
+        f"- reason: `{payload['reason'] or 'none'}`",
         f"- ok: `{payload['ok']}`",
         f"- changed_path_count: `{payload['changed_path_count']}`",
         "",
