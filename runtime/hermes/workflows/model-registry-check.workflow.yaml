@@ -20,8 +20,9 @@ nodes:
     depends_on: []
     executor:
       kind: script
-      command: /opt/data/profiles/model-maintainer/scripts/model_maintainer_registry_check.py
-      args: []
+      command: python3
+      args:
+        - /opt/data/profiles/model-maintainer/scripts/model_maintainer_registry_check.py
       timeout_seconds: 180
     permissions:
       docs_live_write: false
