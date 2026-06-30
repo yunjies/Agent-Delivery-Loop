@@ -27,6 +27,26 @@ This registers:
 - `lark-operator`
 - `model-maintainer`
 
+## Registry Health
+
+Daily registry health replays known expert registration and reports drift. It does not auto-register unknown profiles.
+
+Manual script:
+
+```bash
+python3 /opt/data/profiles/delivery-supervisor/scripts/adl_registry_health.py
+```
+
+Workflow:
+
+```bash
+/opt/hermes/.venv/bin/python /opt/data/scripts/workflow_runtime.py run \
+  --workflow adl-registry-health \
+  --trigger manual:adl-registry-health \
+  --mode production \
+  --max-ticks 8
+```
+
 ## Supervisor Tick
 
 Manual tick:

@@ -1,0 +1,67 @@
+apiVersion: hermes.workflow/v2
+kind: Workflow
+metadata:
+  id: adl-registry-health
+  version: 2.0.0-delivery-supervisor
+  labels:
+    profile: delivery-supervisor
+    domain: agent-delivery-loop
+    purpose: registry-reconcile-and-health
+schedule:
+  mode: manual
+  enabled: false
+runtime:
+  max_concurrency: 1
+model_policy:
+  rule: "Deterministic script replays known expert registration and reports unknown profile candidates; it does not auto-register unknown profiles."
+nodes:
+  - id: collect-adl-registry-health
+    type: script
+    depends_on: []
+    executor:
+      kind: script
+      command: python3
+      args:
+        - /opt/data/profiles/delivery-supervisor/scripts/adl_registry_health.py
+      timeout_seconds: 120
+    permissions:
+      docs_live_write: false
+      feishu_send: false
+      cron_mutation: false
+      workflow_mutation: false
+      profile_mutation: false
+      skill_mutation: false
+      secret_mutation: false
+    outputs:
+      schema_ref: "#/schemas/collect_result"
+
+  - id: publish-adl-registry-health
+    type: publisher
+    depends_on:
+      - collect-adl-registry-health
+    executor:
+      kind: lark_publisher
+      mode: production
+      name: adl-registry-health
+      lark_profile: delivery-supervisor
+      target:
+        type: feishu
+        chat_id: oc_04ae69db08310c7a2062dee828d9cbf9
+    inputs:
+      content:
+        file: /opt/data/workflows/outputs/adl-registry-health/adl-registry-health.md
+    permissions:
+      docs_live_write: false
+      feishu_send: true
+      cron_mutation: false
+      workflow_mutation: false
+      profile_mutation: false
+      skill_mutation: false
+      secret_mutation: false
+    outputs:
+      schema_ref: "#/schemas/delivery"
+schemas:
+  collect_result:
+    type: object
+  delivery:
+    type: object
