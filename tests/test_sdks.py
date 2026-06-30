@@ -160,7 +160,7 @@ class SdkTests(unittest.TestCase):
         self.assertEqual(decision["spec"]["action"], "request_approval")
         self.assertEqual(ranked[0]["expert_id"], "archiver")
 
-    def test_delivery_supervisor_checks_path_governance_before_task_creation(self):
+    def test_delivery_supervisor_reroutes_path_governance_before_task_creation(self):
         demand = create_demand(
             title="Update workflow",
             request="Update workflow spec",
@@ -177,8 +177,20 @@ class SdkTests(unittest.TestCase):
                 "invocation": {"adapter": "hermes_workflow", "profile": "home-media"},
             },
         }
+        owner = {
+            "apiVersion": "agent.delivery.loop/v0",
+            "kind": "Expert",
+            "metadata": {"id": "framework-maintainer", "title": "Framework Maintainer"},
+            "spec": {
+                "expert_kind": "hermes_profile",
+                "capabilities": [{"id": "workflow_edit", "description": "Edit workflow", "priority": 1, "default_owner": False}],
+                "invocation": {"adapter": "hermes_profile", "profile": "framework-maintainer"},
+            },
+        }
 
         def evaluator(task_spec, selected_expert):
+            if task_spec["path_governance"]["actor_profile"] == "framework-maintainer":
+                return {"ok": True, "actor_profile": "framework-maintainer", "violations": [], "warnings": [], "results": []}
             return {
                 "ok": False,
                 "actor_profile": task_spec["path_governance"]["actor_profile"],
@@ -196,7 +208,7 @@ class SdkTests(unittest.TestCase):
 
         task, decision, ranked = propose_next_task(
             goal,
-            [expert],
+            [expert, owner],
             {
                 "task_type": "workflow_run",
                 "objective": "Update workflow spec",
@@ -210,13 +222,13 @@ class SdkTests(unittest.TestCase):
             },
             path_governance_evaluator=evaluator,
         )
-        self.assertIsNone(task)
-        self.assertEqual(decision["spec"]["action"], "mark_blocked")
-        self.assertIsNone(decision["spec"]["required_approval"])
-        self.assertIn("reset this goal", decision["spec"]["next_prompt"])
-        self.assertIn("delegate_task", decision["spec"]["next_prompt"])
-        self.assertIn("framework-maintainer", decision["spec"]["next_prompt"])
-        self.assertEqual(decision["spec"]["review_feedback"]["path_governance"]["violations"][0]["owner_profile"], "framework-maintainer")
+        self.assertIsNotNone(task)
+        self.assertEqual(task["spec"]["assignee"]["id"], "framework-maintainer")
+        self.assertEqual(task["spec"]["path_governance"]["actor_profile"], "framework-maintainer")
+        self.assertEqual(decision["spec"]["action"], "create_task")
+        self.assertEqual(decision["spec"]["next_task"]["rerouted_from"], "home-media")
+        self.assertEqual(decision["spec"]["next_task"]["rerouted_to"], "framework-maintainer")
+        self.assertEqual(decision["spec"]["review_feedback"]["path_governance_original"]["violations"][0]["owner_profile"], "framework-maintainer")
         self.assertEqual(ranked[0]["expert_id"], "home-media")
 
     def test_delivery_supervisor_keeps_path_governance_on_created_task(self):

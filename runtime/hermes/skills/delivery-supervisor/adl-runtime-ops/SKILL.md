@@ -154,7 +154,7 @@ Only run workflow tasks after the task is approved and does not request high-ris
 Preferred order for governed paths:
 
 1. Run path governance during task proposal before creating the task.
-2. If path governance fails, block the proposal and clarify/reset the goal so the write is delegated to the owning profile.
+2. If the selected profile does not own the planned paths, reroute the task to the owning profile before creating it.
 3. Keep the accepted `spec.path_governance` on the task.
 4. Let `run-workflow-task` repeat the preflight as the last guard before execution.
 

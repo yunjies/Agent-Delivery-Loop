@@ -69,7 +69,7 @@ Runtime path rules live at:
 Default ownership:
 
 - framework-level model/profile/skill/workflow/cron/ADL config: `framework-maintainer`
-- Mind Palace wiki content: direct writes are owned by `mind-palace`; other profiles should delegate wiki write requests to `mind-palace`.
+- Mind Palace wiki content: direct writes are owned by `mind-palace`; other profiles must be rerouted to `mind-palace` before task creation.
 
 Unknown paths are allowed in the first layer. Use `--strict-unowned` when a workflow needs a hard allowlist.
 

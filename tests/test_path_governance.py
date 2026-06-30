@@ -76,6 +76,7 @@ class PathGovernanceTests(unittest.TestCase):
         self.assertEqual(payload["violations"][0]["owner_profile"], "mind-palace")
         self.assertEqual(payload["violations"][0]["delegate_profile"], "mind-palace")
         self.assertEqual(payload["violations"][0]["delegate_action"], "delegate_task")
+        self.assertEqual(payload["violations"][0]["reroute_profile"], "mind-palace")
 
     def test_strict_unowned_path_fails(self):
         payload = check_paths("framework-maintainer", ["/tmp/unowned.txt"], config_path=self.config, strict_unowned=True)

@@ -72,11 +72,14 @@ def propose_next_task(goal, experts, task_spec, path_governance_evaluator=None):
 
     path_preflight = _evaluate_path_governance(task_spec, selected, path_governance_evaluator)
     if path_preflight and not path_preflight.get("ok"):
-        next_prompt = _path_governance_clarify_prompt(task_spec, selected, path_preflight)
+        rerouted = _try_reroute_path_governance(goal, experts, task_spec, selected, path_preflight, path_governance_evaluator)
+        if rerouted:
+            return rerouted
+        next_prompt = _path_governance_block_prompt(task_spec, selected, path_preflight)
         decision = create_loop_decision(
             goal,
             action="mark_blocked",
-            reason=f"Path governance preflight failed before creating a task for expert {selected}; clarify and reset the goal before routing.",
+            reason=f"Path governance preflight failed before creating a task for expert {selected}; no valid owner reroute was available.",
             budget_assessment={
                 "within_budget": True,
             },
@@ -119,6 +122,71 @@ def propose_next_task(goal, experts, task_spec, path_governance_evaluator=None):
     return task, decision, ranked
 
 
+def _try_reroute_path_governance(goal, experts, task_spec, selected_expert, path_preflight, evaluator):
+    delegate = _single_delegate_profile(path_preflight)
+    if not delegate or delegate == selected_expert or not _expert_exists(experts, delegate):
+        return None
+    corrected_spec = _correct_task_spec_for_delegate(task_spec, delegate)
+    corrected_preflight = _evaluate_path_governance(corrected_spec, delegate, evaluator)
+    if corrected_preflight and not corrected_preflight.get("ok"):
+        return None
+    task = create_task(
+        goal,
+        task_type=corrected_spec["task_type"],
+        objective=corrected_spec["objective"],
+        assignee={"kind": "expert", "id": delegate},
+        permissions=corrected_spec.get("permissions") or {},
+        acceptance=corrected_spec.get("acceptance") or {"evidence_required": True},
+        budget=corrected_spec.get("budget") or {},
+        required_capabilities=corrected_spec.get("required_capabilities") or [],
+        path_governance=corrected_spec.get("path_governance"),
+    )
+    decision = create_loop_decision(
+        goal,
+        action="create_task",
+        reason=f"Rerouted task from {selected_expert} to owning profile {delegate} based on path governance.",
+        next_task={
+            "ref": task["metadata"]["id"],
+            "rerouted_from": selected_expert,
+            "rerouted_to": delegate,
+            "path_governance": corrected_preflight,
+        },
+        budget_assessment={
+            "within_budget": True,
+        },
+        risk_assessment={
+            "high_risk": False,
+            "gate_required": False,
+        },
+        review_feedback={
+            "path_governance_original": path_preflight,
+            "path_governance_corrected": corrected_preflight,
+        },
+    )
+    return task, decision, rank_experts(
+        {"spec": {"objective": corrected_spec["objective"], "required_capabilities": corrected_spec.get("required_capabilities", [])}},
+        experts,
+    )
+
+
+def _single_delegate_profile(path_preflight):
+    violations = path_preflight.get("violations") or []
+    delegates = sorted({item.get("delegate_profile") or item.get("owner_profile") for item in violations if item.get("delegate_profile") or item.get("owner_profile")})
+    return delegates[0] if len(delegates) == 1 else None
+
+
+def _expert_exists(experts, expert_id):
+    return any((expert.get("metadata") or {}).get("id") == expert_id for expert in experts)
+
+
+def _correct_task_spec_for_delegate(task_spec, delegate):
+    corrected = dict(task_spec)
+    path_governance = dict(corrected.get("path_governance") or {})
+    path_governance["actor_profile"] = delegate
+    corrected["path_governance"] = path_governance
+    return corrected
+
+
 def _evaluate_path_governance(task_spec, selected_expert, evaluator):
     path_governance = task_spec.get("path_governance") or {}
     planned_paths = path_governance.get("planned_paths") or path_governance.get("changed_paths") or []
@@ -138,7 +206,7 @@ def _evaluate_path_governance(task_spec, selected_expert, evaluator):
     return evaluator(task_spec=task_spec, selected_expert=selected_expert)
 
 
-def _path_governance_clarify_prompt(task_spec, selected_expert, path_preflight):
+def _path_governance_block_prompt(task_spec, selected_expert, path_preflight):
     violations = path_preflight.get("violations") or []
     owners = sorted({item.get("owner_profile") for item in violations if item.get("owner_profile")})
     delegates = sorted({item.get("delegate_profile") for item in violations if item.get("delegate_profile")})
@@ -149,8 +217,8 @@ def _path_governance_clarify_prompt(task_spec, selected_expert, path_preflight):
     return (
         f"Clarify and reset this goal before creating a task. The proposed task for expert {selected_expert} "
         f"would touch {path_text}, which is owned by {owner_text}. "
-        f"Do not write the path directly from {selected_expert}; delegate the write request to {delegate_text} "
-        "through delegate_task, adjust the planned paths, or split the goal so each write is performed by the correct profile. "
+        f"The correct owner route is {delegate_text}, but automatic reroute was not available. "
+        "Adjust the task so each write is performed by the correct profile. "
         "Preserve the original objective and include the corrected "
         "`path_governance.actor_profile` and `planned_paths`."
     )

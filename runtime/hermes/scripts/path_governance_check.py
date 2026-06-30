@@ -102,8 +102,10 @@ def check_one_path(actor_profile: str, changed_path: str, config: dict, strict_u
         "allowed_profiles": allowed_profiles,
         "delegate_profile": rule.get("delegate_profile") or rule.get("owner_profile"),
         "delegate_action": rule.get("delegate_action") or "delegate_task",
+        "reroute_profile": rule.get("delegate_profile") or rule.get("owner_profile"),
+        "reroute_action": rule.get("delegate_action") or "delegate_task",
         "actor_profile": actor_profile,
-        "message": f"path is owned by {rule.get('owner_profile')}; delegate via {rule.get('delegate_profile') or rule.get('owner_profile')}",
+        "message": f"path is owned by {rule.get('owner_profile')}; reroute to {rule.get('delegate_profile') or rule.get('owner_profile')}",
     }
 
 
@@ -158,8 +160,8 @@ def render_markdown(payload: dict) -> str:
     ]
     if payload["violations"]:
         for item in payload["violations"]:
-            delegate = item.get("delegate_profile")
-            suffix = f"; delegate_to=`{delegate}`" if delegate else ""
+            reroute = item.get("reroute_profile") or item.get("delegate_profile")
+            suffix = f"; reroute_to=`{reroute}`" if reroute else ""
             lines.append(f"- `{item['path']}`: {item.get('message', 'violation')} (rule `{item.get('rule_id')}`{suffix})")
     else:
         lines.append("- none")
